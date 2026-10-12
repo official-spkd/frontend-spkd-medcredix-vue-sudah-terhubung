@@ -59,6 +59,21 @@ export const CRED_LIFECYCLE = [
 
 export const ACTION_STATUSES = ['Baru', 'Ditugaskan', 'Dalam Pengerjaan', 'Menunggu Verifikasi', 'Selesai', 'Ditolak', 'Dibuka Kembali', 'Ditutup']
 
+// Status asal yang boleh menuju tiap status (sama dengan actionFlow di backend fe_ops.go).
+export const ACTION_FLOW: Record<string, string[]> = {
+  Ditugaskan: ['Baru', 'Dibuka Kembali'],
+  'Dalam Pengerjaan': ['Baru', 'Ditugaskan', 'Menunggu Verifikasi', 'Dibuka Kembali'],
+  'Menunggu Verifikasi': ['Dalam Pengerjaan'],
+  Selesai: ['Menunggu Verifikasi'],
+  Ditutup: ['Selesai'],
+  Ditolak: ['Baru', 'Ditugaskan', 'Dalam Pengerjaan', 'Menunggu Verifikasi'],
+  'Dibuka Kembali': ['Selesai', 'Ditutup', 'Ditolak'],
+}
+
+export function canMoveAction(from: string, to: string): boolean {
+  return ACTION_FLOW[to]?.includes(from) ?? false
+}
+
 export const RISK_CATEGORIES = ['Kredensial', 'Klinis', 'Keselamatan Pasien', 'Klaim', 'Kualitas Data', 'Interoperabilitas', 'Medikasi', 'Operasional', 'Kepatuhan']
 
 export const DOMAIN_LABELS: Record<string, string> = {

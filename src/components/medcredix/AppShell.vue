@@ -27,15 +27,20 @@ const term = ref('')
 const boot = ref<any>(null)
 
 async function loadBoot() {
+  if (!store.user) return // sudah logout, jangan panggil API
   try {
     boot.value = await api<any>(`/bootstrap${store.hospitalId ? `?hospitalId=${store.hospitalId}` : ''}`)
   } catch {
     /* biarkan data lama */
   }
 }
+let bootTimer: ReturnType<typeof setInterval> | null = null
 onMounted(() => {
   loadBoot()
-  setInterval(loadBoot, 60_000)
+  bootTimer = setInterval(loadBoot, 60_000)
+})
+onBeforeUnmount(() => {
+  if (bootTimer) clearInterval(bootTimer)
 })
 watch(() => store.hospitalId, loadBoot)
 

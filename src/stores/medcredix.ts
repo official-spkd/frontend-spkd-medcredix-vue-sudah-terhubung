@@ -2,7 +2,7 @@
 // sesi, router hash, drawer Why/Aksi/Bukti, tema.
 import { defineStore } from 'pinia'
 import { onBeforeUnmount, onMounted } from 'vue'
-import { setActiveHospital, setToken } from '~/composables/useApi'
+import { revokeSession, setActiveHospital, setToken } from '~/composables/useApi'
 
 export type SessionUser = {
   id: string
@@ -52,6 +52,7 @@ export const useMedCredix = defineStore('medcredix', {
       this.user = user
     },
     logout() {
+      revokeSession() // cabut token di server sebelum dihapus dari browser
       window.localStorage.removeItem('medcredix-session')
       setToken(null)
       setActiveHospital(null)
@@ -59,6 +60,8 @@ export const useMedCredix = defineStore('medcredix', {
       this.hospitalId = null
       this.whyDomain = null
       this.actionDraft = null
+      this.evidenceRef = null
+      this.navigate('dashboard') // login berikutnya mulai dari dashboard
     },
     setHospital(id: string | null) {
       setActiveHospital(id)

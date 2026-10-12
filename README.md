@@ -227,6 +227,17 @@ Karena browser hanya bicara dengan `localhost:3000`, **tidak ada masalah CORS** 
 
 Setelah login, backend mengirim **token JWT**. Token disimpan di browser dan otomatis dikirim di setiap request sebagai header `Authorization: Bearer <token>`. Bila token kedaluwarsa, aplikasi kembali ke halaman login.
 
+### Login & logout
+
+| Kejadian | Yang terjadi |
+|---|---|
+| Login | `POST /api/auth`. Token (berlaku 12 jam) disimpan di browser. |
+| Klik **Keluar** | Frontend memanggil `POST /api/auth/logout` sehingga token dicabut di server, lalu sesi di browser dihapus dan halaman kembali ke dashboard login. |
+| Token kedaluwarsa / dicabut | Backend membalas `401`, frontend otomatis kembali ke halaman login. |
+| Database sedang mati | Backend membalas `503`. Pengguna **tidak** ter-logout; cukup ulangi setelah database hidup. |
+
+Kode terkait: tombol Keluar di `src/components/medcredix/AppShell.vue`, fungsi `logout()` di `src/stores/medcredix.ts`, dan `revokeSession()` di `src/composables/useApi.ts`.
+
 ### Langkah menyambungkan
 
 1. **Jalankan PostgreSQL** (biasanya sudah otomatis jalan setelah install).
@@ -260,7 +271,7 @@ Lalu restart `npm run dev`.
 
 ### Mengecek koneksi
 
-- Buka DevTools browser (**F12**) → tab **Network**, lalu login. Request ke `/api/auth/login` harus berstatus **200**.
+- Buka DevTools browser (**F12**) → tab **Network**, lalu login. Request ke `/api/auth` harus berstatus **200**.
 - Setiap aksi di halaman (membuat aksi, verifikasi kredensial, ubah status klaim) langsung tersimpan di PostgreSQL. Hasilnya bisa dicek di DBeaver.
 
 ---
@@ -330,6 +341,22 @@ Akun ini dibuat oleh backend bila `SEED_DEMO=true` di `.env` backend. Semua akun
 Menu dan tombol yang muncul menyesuaikan peran. Contohnya, Viewer hanya bisa melihat, sedangkan Super Admin dan Auditor BPJS bisa berpindah rumah sakit lewat pilihan RS di bagian atas.
 
 > Untuk produksi, matikan `SEED_DEMO` di backend dan ganti semua password akun demo.
+
+### Alur status aksi (Action Center)
+
+Status aksi harus berurutan. Di panel **Alur Kerja**, tombol status yang tidak bisa dipilih dari status sekarang tampil abu-abu, dan tombol **Buka Kembali** hanya muncul bila aksi sudah Selesai, Ditutup atau Ditolak.
+
+| Ke status | Boleh dari |
+|---|---|
+| Ditugaskan | Baru, Dibuka Kembali |
+| Dalam Pengerjaan | Baru, Ditugaskan, Menunggu Verifikasi, Dibuka Kembali |
+| Menunggu Verifikasi | Dalam Pengerjaan |
+| Selesai | Menunggu Verifikasi |
+| Ditutup | Selesai |
+| Ditolak | Baru, Ditugaskan, Dalam Pengerjaan, Menunggu Verifikasi |
+| Dibuka Kembali | Selesai, Ditutup, Ditolak |
+
+Aturan yang sama dicek ulang oleh backend, dan daftarnya ada di `ACTION_FLOW` (`src/utils/format.ts`). Bila salah satu diubah, ubah juga `actionFlow` di backend (`internal/api/fe_ops.go`).
 
 ---
 
@@ -415,6 +442,9 @@ Di produksi, selalu gunakan **HTTPS** karena token login dikirim di setiap reque
 | Error CORS di console browser | Hanya terjadi bila `VITE_API_BASE` diisi. Samakan `CORS_ORIGIN` di backend dengan alamat frontend. |
 | `Cannot find module @rollup/rollup-...` | `node_modules` dibuat di OS lain. Hapus folder `node_modules`, lalu `npm install` ulang. |
 | Perubahan env tidak berpengaruh | Restart `npm run dev`. |
+| Toast `Gagal` saat ubah status aksi (`409`) | Status dilompati. Ikuti urutan di [Alur status aksi](#alur-status-aksi-action-center). |
+| `Database sedang tidak dapat diakses` (`503`) | PostgreSQL mati. Nyalakan lagi, lalu ulangi; tidak perlu login ulang. |
+| Habis klik Keluar, token lama masih bisa dipakai | Backend di-restart setelah logout (daftar token yang dicabut tersimpan di memori). Token tetap mati sendiri setelah 12 jam. |
 
 <details>
 <summary><b>🪟 Windows</b></summary>

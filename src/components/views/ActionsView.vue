@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // ActionsView — Action Center closed-loop (port dari views-actions.tsx).
 import { CheckCircle2, PlusCircle, MessageSquare, History, UserPlus, RotateCcw, ClipboardCheck, Send, Clock } from 'lucide-vue-next'
-import { ACTION_STATUSES, fmtDate, fmtDateTime } from '~/utils/format'
+import { ACTION_STATUSES, canMoveAction, fmtDate, fmtDateTime } from '~/utils/format'
 import { useMedCredix } from '~/stores/medcredix'
 import { toast } from '~/composables/useToast'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -179,9 +179,12 @@ const assignOwner = ref('')
                   'rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold transition-colors',
                   detail.action.status === s ? 'border-brand bg-brand text-white'
                     : ACTION_STATUSES.indexOf(s) < ACTION_STATUSES.indexOf(detail.action.status) ? 'border-success/40 bg-success-light/50 text-success'
-                    : 'text-muted-foreground hover:border-brand-2/50',
+                    : canMoveAction(detail.action.status, s) ? 'text-muted-foreground hover:border-brand-2/50'
+                    : 'cursor-not-allowed text-muted-foreground opacity-50',
                 ]"
-                @click="patch({ action: 'status', status: s }, `Status → ${s}`)"
+                :disabled="detail.action.status !== s && !canMoveAction(detail.action.status, s)"
+                :title="detail.action.status === s || canMoveAction(detail.action.status, s) ? '' : `Tidak bisa langsung dari ${detail.action.status}`"
+                @click="detail.action.status !== s && patch({ action: 'status', status: s }, `Status → ${s}`)"
               >
                 {{ s }}
               </button>
@@ -196,7 +199,7 @@ const assignOwner = ref('')
                 <UserPlus class="h-3.5 w-3.5" /> Tugaskan
               </Button>
               <Input type="date" class="h-8 w-40 text-xs" aria-label="Ubah tenggat" @change="(e: any) => e.target.value && patch({ action: 'assign', dueDate: e.target.value }, 'Tenggat diperbarui')" />
-              <Button size="sm" variant="outline" class="h-8 gap-1 text-xs" @click="patch({ action: 'status', status: 'Dibuka Kembali' }, 'Aksi dibuka kembali')">
+              <Button v-if="canMoveAction(detail.action.status, 'Dibuka Kembali')" size="sm" variant="outline" class="h-8 gap-1 text-xs" @click="patch({ action: 'status', status: 'Dibuka Kembali' }, 'Aksi dibuka kembali')">
                 <RotateCcw class="h-3.5 w-3.5" /> Buka Kembali
               </Button>
             </div>

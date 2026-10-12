@@ -55,6 +55,13 @@ function headers(json: boolean): Record<string, string> {
   return h
 }
 
+// Beri tahu backend agar token dicabut. Tidak ditunggu: logout di browser tetap jalan walau server mati.
+export function revokeSession() {
+  const token = getToken()
+  if (DEMO_MODE || !token) return
+  fetch(API_BASE + '/auth/logout', { method: 'POST', headers: headers(false), keepalive: true }).catch(() => {})
+}
+
 // Token kedaluwarsa / tidak valid -> bersihkan sesi lalu kembali ke halaman login.
 function handleUnauthorized() {
   window.localStorage.removeItem(SESSION_KEY)
