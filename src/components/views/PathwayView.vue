@@ -78,7 +78,7 @@ const cpcs = computed(() => data.value?.cpcs ?? { score: 0, coverage: 0, adheren
     </SectionCard>
 
     <!-- Detail drawer -->
-    <Dialog :open="!!selected" @update:open="(o) => !o && (selected = null)">
+    <Dialog size="lg" :open="!!selected" @update:open="(o) => !o && (selected = null)">
       <template v-if="selected">
         <div class="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
           ICD-10 {{ selected.icd10 }} · LOS standar {{ selected.standardLos }} hari <DemoBadge />
