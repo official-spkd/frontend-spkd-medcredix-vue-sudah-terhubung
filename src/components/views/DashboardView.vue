@@ -75,7 +75,7 @@ const kLabel = computed(() => {
               <Badge class="border-white/20 bg-white/10 text-[10px] text-white">Formula {{ intel.formulaVersion ?? '1.0' }}</Badge>
             </div>
             <div class="mt-4 flex items-center gap-5">
-              <ScoreRing :value="intel.healthScore" :size="124" :tone="intel.healthScore >= 75 ? 'info' : intel.healthScore >= 60 ? 'warning' : 'danger'" />
+              <ScoreRing :value="intel.healthScore" :size="124" :tone="intel.healthScore >= 75 ? 'info' : intel.healthScore >= 60 ? 'warning' : 'danger'" @click="store.openWhy('health')" />
               <div>
                 <div class="font-display text-lg font-bold leading-tight">{{ kLabel }}</div>
                 <div class="mt-2 space-y-1 text-[11px] text-white/75">
@@ -101,7 +101,7 @@ const kLabel = computed(() => {
                 Kelompok {{ k }}: <span class="font-display text-xs">{{ intel.kelompok[k] }}</span>
               </button>
             </div>
-            <Button size="sm" class="mt-5 w-full gap-1.5 bg-white text-brand hover:bg-white/90" @click="store.openWhy('health')">
+            <Button size="sm" variant="inverse" class="mt-5 w-full gap-1.5" @click="store.openWhy('health')">
               <Activity class="h-3.5 w-3.5" /> Mengapa Skor Ini?
             </Button>
           </div>
