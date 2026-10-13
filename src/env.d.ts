@@ -5,6 +5,8 @@ interface ImportMetaEnv {
   readonly VITE_DEMO_MODE?: string
   /** Base URL backend Golang; kosong = same-origin (proxy Vite / mode single-binary) */
   readonly VITE_API_BASE?: string
+  /** "true" = tampilkan daftar akun demo di halaman login (default: hanya saat npm run dev) */
+  readonly VITE_SHOW_DEMO_LOGIN?: string
 }
 
 interface ImportMeta {
