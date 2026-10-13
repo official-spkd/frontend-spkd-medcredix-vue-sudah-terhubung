@@ -99,7 +99,7 @@ const regs = computed(() => data.value?.regulations ?? [])
     </SectionCard>
 
     <!-- Detail drawer -->
-    <Dialog :open="!!selected" @update:open="(o) => !o && (selected = null)">
+    <Dialog size="lg" :open="!!selected" @update:open="(o) => !o && (selected = null)">
       <template v-if="selected">
         <div class="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
           {{ selected.number }} · {{ selected.authority }} <DemoBadge />
