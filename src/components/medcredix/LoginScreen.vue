@@ -2,15 +2,15 @@
 // LoginScreen — port dari components/medcredix/login.tsx (SPKD brand).
 import { Activity, Eye, EyeOff, Loader2, Lock, LogIn, Mail, ShieldCheck, TrendingUp, Radar } from 'lucide-vue-next'
 import { useMedCredix, type SessionUser } from '~/stores/medcredix'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { api, setToken } from '~/composables/useApi'
 import Button from '~/components/ui/Button.vue'
 import Input from '~/components/ui/Input.vue'
 import Label from '~/components/ui/Label.vue'
 
 const store = useMedCredix()
-const email = ref('admin@nusantarasehat.co.id')
-const password = ref('medcredix2026')
+const email = ref('')
+const password = ref('')
 const showPw = ref(false)
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -25,7 +25,15 @@ const DEMO_ACCOUNTS = [
   { email: 'superadmin@spkd.co.id', role: 'SPKD Super Admin' },
   { email: 'auditorbpjs@spkd.co.id', role: 'Auditor BPJS' },
 ]
-const PW = 'medcredix2026'
+
+// Klik akun demo: isi email saja, kata sandi tetap diketik manual
+async function pickAccount(addr: string) {
+  email.value = addr
+  password.value = ''
+  error.value = null
+  await nextTick()
+  document.getElementById('password')?.focus()
+}
 
 async function submit() {
   loading.value = true
@@ -131,12 +139,12 @@ async function submit() {
           </form>
 
           <div class="mt-6 rounded-xl border bg-muted/40 p-4">
-            <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Akun demo (kata sandi: {{ PW }})</div>
+            <div class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Akun demo · klik untuk isi email</div>
             <div class="max-h-40 space-y-1 overflow-y-auto scrollbar-thin">
               <button
                 v-for="a in DEMO_ACCOUNTS" :key="a.email" type="button"
                 class="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors hover:bg-brand-light"
-                @click="email = a.email; password = PW"
+                @click="pickAccount(a.email)"
               >
                 <span class="truncate font-medium text-foreground">{{ a.email }}</span>
                 <span class="shrink-0 text-[10px] text-muted-foreground">{{ a.role }}</span>
