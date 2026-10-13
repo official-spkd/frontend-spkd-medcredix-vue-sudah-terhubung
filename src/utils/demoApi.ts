@@ -186,6 +186,12 @@ const OPEN_ACTION = ['Baru', 'Ditugaskan', 'Dalam Pengerjaan', 'Menunggu Verifik
 
 const handlers: Record<string, Handler> = {}
 
+// ----- dokumen (mode demo: daftar saja, tanpa berkas) -----
+handlers['GET /documents'] = ({ user, q }) => {
+  const hid = resolveHospital(user, q.get('hospitalId'))
+  return { documents: inH('CredentialDocument', hid).map((d) => ({ ...d, hasFile: false })) }
+}
+
 // ----- bootstrap & dashboard -----
 handlers['GET /bootstrap'] = ({ user, q }) => {
   const hid = resolveHospital(user, q.get('hospitalId'))
