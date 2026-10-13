@@ -33,13 +33,18 @@ async function patchW(w: any, action: string, extra?: any) {
     toast({ title: 'Gagal', description: e?.message, variant: 'destructive' })
   }
 }
+
+// `document` tidak bisa dipakai langsung di template Vue.
+function scrollToRules() {
+  document.getElementById('aturan-warning')?.scrollIntoView({ behavior: 'smooth' })
+}
 </script>
 
 <template>
   <div class="space-y-5">
     <PageHeader title="Early Warning Center" sub="MedCredix bekerja lebih dulu — Anda tidak perlu menatap dashboard sepanjang hari." demo>
       <template #actions>
-        <Button variant="outline" size="sm" class="gap-1.5" @click="document.getElementById('aturan-warning')?.scrollIntoView({ behavior: 'smooth' })">
+        <Button variant="outline" size="sm" class="gap-1.5" @click="scrollToRules">
           <Bell class="h-3.5 w-3.5" /> Aturan Ambang
         </Button>
       </template>
