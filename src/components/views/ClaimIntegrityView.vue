@@ -127,7 +127,7 @@ function parseFlags(json: string | null) {
     </SectionCard>
 
     <!-- Detail drawer -->
-    <Dialog :open="!!selected" @update:open="(o) => !o && (selected = null)">
+    <Dialog size="lg" :open="!!selected" @update:open="(o) => !o && (selected = null)">
       <template v-if="detail">
         <div class="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
           {{ detail.claim.careType }} · SEP {{ detail.claim.sepNumber }} · Pasien {{ detail.claim.patientInit }} (inisial saja) <DemoBadge />
