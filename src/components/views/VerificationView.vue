@@ -19,12 +19,15 @@ async function load() {
 }
 onMounted(load)
 const queue = computed(() =>
-  (data.value?.credentials ?? []).filter((c: any) => ['Diajukan', 'Tinjauan Dokumen', 'Verifikasi', 'Tinjauan Komite'].includes(c.status)),
+  (data.value?.credentials ?? []).filter((c: any) => ['Diajukan', 'Verifikasi', 'Tinjauan Komite'].includes(c.status)),
 )
+const ACTION_LABEL: Record<string, string> = {
+  verify: 'Dokumen terverifikasi', review: 'Diteruskan ke komite', approve: 'Disetujui', reject: 'Ditolak komite',
+}
 async function transition(c: any, action: string) {
   try {
     await api('/credentials', { method: 'PATCH', body: { id: c.id, action } })
-    toast({ title: `Berhasil: ${action}` })
+    toast({ title: `${ACTION_LABEL[action] ?? action}: ${c.type} ${c.practitionerName ?? ''}` })
     load()
   } catch (e: any) {
     toast({ title: 'Ditolak', description: e?.message, variant: 'destructive' })
@@ -63,7 +66,7 @@ function toneCls(tone: string) {
           </span>
         </div>
         <div class="mt-3 flex flex-wrap gap-1.5 border-t pt-3">
-          <Button v-if="['Diajukan', 'Tinjauan Dokumen'].includes(c.status)" size="sm" variant="outline" class="h-7 gap-1 text-xs" @click="transition(c, 'verify')">
+          <Button v-if="c.status === 'Diajukan'" size="sm" variant="outline" class="h-7 gap-1 text-xs" @click="transition(c, 'verify')">
             <CheckCircle2 class="h-3.5 w-3.5" /> Verifikasi Dokumen
           </Button>
           <Button v-if="c.status === 'Verifikasi'" size="sm" variant="outline" class="h-7 gap-1 text-xs" @click="transition(c, 'review')">
@@ -73,8 +76,8 @@ function toneCls(tone: string) {
             <Button size="sm" class="h-7 gap-1 bg-success text-xs hover:bg-success" @click="transition(c, 'approve')">
               <CheckCircle2 class="h-3.5 w-3.5" /> Setujui
             </Button>
-            <Button size="sm" variant="outline" class="h-7 gap-1 text-xs text-danger" @click="transition(c, 'suspend')">
-              <XCircle class="h-3.5 w-3.5" /> Tangguhkan
+            <Button size="sm" variant="outline" class="h-7 gap-1 text-xs text-danger" @click="transition(c, 'reject')">
+              <XCircle class="h-3.5 w-3.5" /> Tolak
             </Button>
           </template>
         </div>
