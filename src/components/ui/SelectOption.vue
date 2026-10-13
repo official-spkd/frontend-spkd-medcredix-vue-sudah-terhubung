@@ -1,16 +1,20 @@
 <script setup lang="ts">
-// SelectOption — item opsi untuk Select (registrasi via provide/inject).
-import { inject, onMounted, useSlots } from 'vue'
+// SelectOption — item opsi untuk Select. Label diambil dari teks slot.
+import { getCurrentInstance, inject, onBeforeUnmount, onMounted, onUpdated, ref, watch } from 'vue'
+
 const props = defineProps<{ value: string }>()
-const register = inject<((value: string, label: string) => void) | null>('select-register', null)
-if (register) register(props.value, props.value)
-const slots = useSlots()
-onMounted(() => {
-  // label mengikuti slot default bila tersedia
-  const label = slots.default?.()?.[0]?.children
-  if (register && typeof label === 'string') register(props.value, label)
-})
+const ctx = inject<{ set: (uid: number, value: string, label: string) => void; remove: (uid: number) => void } | null>('select-ctx', null)
+const uid = getCurrentInstance()!.uid
+const el = ref<HTMLElement | null>(null)
+
+function sync() {
+  ctx?.set(uid, props.value, el.value?.textContent?.trim() || props.value)
+}
+onMounted(sync)
+onUpdated(sync)
+watch(() => props.value, sync)
+onBeforeUnmount(() => ctx?.remove(uid))
 </script>
 <template>
-  <span class="hidden"><slot /></span>
+  <span ref="el"><slot /></span>
 </template>
