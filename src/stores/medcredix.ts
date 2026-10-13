@@ -42,6 +42,7 @@ export const useMedCredix = defineStore('medcredix', {
     actionDraft: null as ActionDraft | null,
     evidenceRef: null as EvidenceRef | null,
     theme: 'light' as 'light' | 'dark',
+    focusId: null as string | null, // item yang dibuka otomatis setelah pindah halaman (hasil pencarian)
   }),
 
   actions: {
@@ -67,9 +68,16 @@ export const useMedCredix = defineStore('medcredix', {
       setActiveHospital(id)
       this.hospitalId = id
     },
-    navigate(view: string) {
+    navigate(view: string, focusId: string | null = null) {
       if (typeof window !== 'undefined') window.location.hash = `/${view}`
       this.view = view
+      this.focusId = focusId
+    },
+    // Ambil sekali item yang harus dibuka (lalu dikosongkan).
+    takeFocus(): string | null {
+      const id = this.focusId
+      this.focusId = null
+      return id
     },
     setView(view: string) {
       this.view = view
