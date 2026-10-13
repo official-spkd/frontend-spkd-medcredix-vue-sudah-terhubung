@@ -6,7 +6,7 @@ import {
 } from 'lucide-vue-next'
 import { NAV, VIEW_TITLES } from '~/utils/nav'
 import { useMedCredix, useHashRouter } from '~/stores/medcredix'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api } from '~/composables/useApi'
 import Badge from '~/components/ui/Badge.vue'
 import Button from '~/components/ui/Button.vue'
@@ -23,6 +23,16 @@ const store = useMedCredix()
 
 const mobileOpen = ref(false)
 const searchOpen = ref(false)
+const searchInput = ref<HTMLInputElement | null>(null)
+// Kursor langsung di kotak pencarian saat dibuka (klik atau Ctrl+K).
+watch(searchOpen, async (o) => {
+  if (o) { await nextTick(); searchInput.value?.focus() }
+})
+function openResult(r: any) {
+  store.navigate(r.view, r.id)
+  searchOpen.value = false
+  term.value = ''
+}
 const term = ref('')
 const boot = ref<any>(null)
 
@@ -224,7 +234,9 @@ function openNotificationLink(link: string) {
       <div class="flex items-center gap-2 border-b px-3 pb-3">
         <Search class="h-4 w-4 shrink-0 text-muted-foreground" />
         <input
-          v-model="term" type="text" placeholder="Cari praktisi, kredensial, klaim, risiko, aksi, regulasi, bukti…"
+          ref="searchInput" v-model="term" type="text"
+          @keydown.enter.prevent="searchResults[0] && openResult(searchResults[0])"
+          placeholder="Cari praktisi, kredensial, klaim, risiko, aksi, regulasi, bukti…"
           class="h-8 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         >
       </div>
@@ -236,7 +248,7 @@ function openNotificationLink(link: string) {
           <button
             v-for="r in searchResults" :key="`${r.type}-${r.id}`"
             class="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-brand-light"
-            @click="store.navigate(r.view); searchOpen = false; term = ''"
+            @click="openResult(r)"
           >
             <span class="rounded-md bg-brand-light p-1.5 text-brand font-display text-[11px] font-bold">{{ r.type.slice(0, 2).toUpperCase() }}</span>
             <span class="min-w-0 flex-1">
