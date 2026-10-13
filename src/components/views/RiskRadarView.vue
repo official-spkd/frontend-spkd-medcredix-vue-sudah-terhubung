@@ -78,7 +78,7 @@ const summary = computed(() => {
       <Filter class="h-4 w-4 text-muted-foreground" />
       <div class="w-36"><Select v-model="level"><SelectOption value="all">Semua Level</SelectOption><SelectOption v-for="l in LEVELS" :key="l" :value="l">{{ l }}</SelectOption></Select></div>
       <div class="w-44"><Select v-model="category"><SelectOption value="all">Semua Kategori</SelectOption><SelectOption v-for="c in RISK_CATEGORIES" :key="c" :value="c">{{ c }}</SelectOption></Select></div>
-      <div class="w-36"><Select v-model="status"><SelectOption value="all">Semua Status</SelectOption><SelectOption v-for="s in ['Terbuka', 'Ditinjau', 'Dalam Pengerjaan', 'Terkelola', 'Ditutup']" :key="s" :value="s">{{ s }}</SelectOption></Select></div>
+      <div class="w-36"><Select v-model="status"><SelectOption value="all">Semua Status</SelectOption><SelectOption v-for="s in ['Baru', 'Terbuka', 'Ditinjau', 'Dalam Pengerjaan', 'Terkelola', 'Teratasi', 'Selesai', 'Ditutup']" :key="s" :value="s">{{ s }}</SelectOption></Select></div>
       <span class="ml-auto text-xs text-muted-foreground">{{ data?.risks?.length ?? 0 }} risiko</span>
     </div>
 
@@ -122,7 +122,7 @@ const summary = computed(() => {
     </div>
 
     <!-- Detail drawer -->
-    <Dialog :open="!!selected" @update:open="(o) => !o && (selected = null)">
+    <Dialog size="lg" :open="!!selected" @update:open="(o) => !o && (selected = null)">
       <template v-if="selected">
         <div class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {{ selected.code }} · Domain {{ selected.domain }} <DemoBadge />
