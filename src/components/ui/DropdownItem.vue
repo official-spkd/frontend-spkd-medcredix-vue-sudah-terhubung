@@ -9,7 +9,7 @@ const props = defineProps<{ danger?: boolean }>()
     type="button"
     :class="[
       'relative flex w-full cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium outline-none transition-colors',
-      danger ? 'text-danger focus:bg-danger-light' : 'focus:bg-muted/70',
+      danger ? 'text-danger hover:bg-danger-light focus:bg-danger-light' : 'hover:bg-muted/70 focus:bg-muted/70',
     ]"
     @click="close()"
   >
