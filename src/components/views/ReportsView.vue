@@ -101,7 +101,7 @@ function renderValue(v: any): string {
     </SectionCard>
 
     <!-- Detail drawer -->
-    <Dialog :open="!!selected" @update:open="(o) => !o && (selected = null)">
+    <Dialog size="lg" :open="!!selected" @update:open="(o) => !o && (selected = null)">
       <template v-if="selected">
         <div class="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
           {{ selected.version }} · Periode {{ selected.period }} <DemoBadge />
