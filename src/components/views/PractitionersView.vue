@@ -5,7 +5,7 @@ import { useMedCredix } from '~/stores/medcredix'
 import { toast } from '~/composables/useToast'
 import { expiryLabel, daysFromNow, fmtDate } from '~/utils/format'
 import { computed, onMounted, ref, watch } from 'vue'
-import { api } from '~/composables/useApi'
+import { api, openFile } from '~/composables/useApi'
 import Badge from '~/components/ui/Badge.vue'
 import Button from '~/components/ui/Button.vue'
 import Dialog from '~/components/ui/Dialog.vue'
@@ -46,11 +46,28 @@ async function loadDetail() {
   try { detail.value = await api(`/practitioners?id=${selected.value}`) } catch { detail.value = null }
 }
 watch(selected, loadDetail)
+// Dibuka dari hasil pencarian global.
+onMounted(() => { const id = store.takeFocus(); if (id) selected.value = id })
+watch(() => store.focusId, (id) => { if (id) selected.value = store.takeFocus() })
 
 const list = computed(() => data.value?.practitioners ?? [])
-const professions = computed(() => [...new Set(list.value.map((p: any) => p.profession))])
+// Daftar profesi dikumpulkan dari semua hasil, supaya pilihan tidak menyusut
+// saat filter profesi sedang aktif. Direset saat ganti RS.
+const professions = ref<string[]>([])
+watch(list, (rows: any[]) => {
+  const seen = new Set<string>(professions.value)
+  for (const p of rows) if (p?.profession) seen.add(String(p.profession))
+  if (seen.size !== professions.value.length) professions.value = [...seen].sort()
+})
+watch(() => store.hospitalId, () => { professions.value = []; prof.value = 'all' })
 function toneCls(tone: string) {
   return tone === 'danger' ? 'bg-danger-light text-danger' : tone === 'warning' ? 'bg-warning-light text-warning' : tone === 'success' ? 'bg-success-light text-success' : 'bg-muted text-muted-foreground'
+}
+
+async function viewDoc(d: any) {
+  try { await openFile(`/documents/file?id=${encodeURIComponent(d.id)}`) } catch (e: any) {
+    toast({ title: 'Dokumen tidak dapat dibuka', description: e?.message, variant: 'destructive' })
+  }
 }
 </script>
 
@@ -74,7 +91,7 @@ function toneCls(tone: string) {
       <div class="w-36">
         <Select v-model="status">
           <SelectOption value="all">Semua Status</SelectOption>
-          <SelectOption v-for="s in ['Aktif', 'Cuti', 'Non-Aktif']" :key="s" :value="s">{{ s }}</SelectOption>
+          <SelectOption v-for="s in ['Aktif', 'Ditangguhkan', 'Nonaktif']" :key="s" :value="s">{{ s }}</SelectOption>
         </Select>
       </div>
       <span class="ml-auto text-xs text-muted-foreground">{{ data?.total ?? 0 }} praktisi</span>
@@ -118,7 +135,7 @@ function toneCls(tone: string) {
     </div>
 
     <!-- Detail drawer -->
-    <Dialog :open="!!selected" @update:open="(o) => !o && (selected = null)">
+    <Dialog size="lg" :open="!!selected" @update:open="(o) => !o && (selected = null)">
       <template v-if="detail">
         <div class="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
           {{ detail.practitioner.profession }} · {{ detail.practitioner.department }} <DemoBadge />
@@ -174,7 +191,8 @@ function toneCls(tone: string) {
                   <StatusBadge :status="d.status" class="ml-auto" />
                   <Button
                     size="sm" variant="ghost" class="h-5 w-5 p-0" aria-label="Lihat dokumen"
-                    @click="toast({ title: 'Pratinjau dokumen', description: `${d.fileName} — pada produksi, file dibuka dari object storage terenkripsi.` })"
+                    :disabled="!d.hasFile" :title="d.hasFile ? 'Buka berkas' : 'Berkas belum diunggah'"
+                    @click="viewDoc(d)"
                   >
                     <Eye class="h-3 w-3" />
                   </Button>
