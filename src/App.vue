@@ -6,6 +6,7 @@ import { useMedCredix, useHashRouter, type SessionUser } from '~/stores/medcredi
 import { computed, onMounted, ref } from 'vue'
 import type { Component } from 'vue'
 import { api } from '~/composables/useApi'
+import { NAV } from '~/utils/nav'
 import Toaster from '~/components/ui/Toaster.vue'
 import ActionDialog from '~/components/medcredix/ActionDialog.vue'
 import AppShell from '~/components/medcredix/AppShell.vue'
@@ -103,6 +104,13 @@ onMounted(async () => {
 })
 
 const activeView = computed(() => VIEWS[store.view])
+
+// Halaman yang dibatasi peran (sama dengan menu samping) tidak dirender untuk peran lain,
+// walau alamatnya diketik langsung di browser.
+const allowed = computed(() => {
+  const item = NAV.flatMap((g) => g.items).find((i) => i.id === store.view)
+  return !item?.roles || (!!store.user && item.roles.includes(store.user.role))
+})
 </script>
 
 <template>
@@ -123,7 +131,13 @@ const activeView = computed(() => VIEWS[store.view])
     <!-- Aplikasi -->
     <template v-else>
       <AppShell>
-        <component :is="activeView" v-if="activeView" />
+        <div v-if="activeView && !allowed" class="flex flex-col items-center justify-center gap-3 py-24 text-center">
+          <div class="font-display text-lg font-bold">Tidak punya akses</div>
+          <p class="max-w-sm text-sm text-muted-foreground">
+            Halaman ini tidak tersedia untuk peran {{ store.user?.roleLabel ?? store.user?.role }}. Gunakan menu di sisi kiri.
+          </p>
+        </div>
+        <component :is="activeView" v-else-if="activeView" />
         <div v-else class="flex flex-col items-center justify-center gap-3 py-24 text-center">
           <div class="font-display text-lg font-bold">Halaman tidak ditemukan</div>
           <p class="max-w-sm text-sm text-muted-foreground">
