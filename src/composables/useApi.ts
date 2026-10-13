@@ -132,3 +132,47 @@ export function downloadCsv(path: string) {
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   })().catch(fail)
 }
+
+// Unggah berkas (multipart). Field "file" + field teks lain dari `fields`.
+export async function apiUpload<T = any>(path: string, file: File | null, fields: Record<string, string> = {}): Promise<T> {
+  if (DEMO_MODE) throw new Error('Unggah berkas tidak tersedia di mode demo.')
+  const form = new FormData()
+  for (const [k, v] of Object.entries(fields)) form.append(k, v)
+  if (file) form.append('file', file)
+  let res: Response
+  try {
+    res = await fetch(API_BASE + withHospital(path), { method: 'POST', headers: headers(false), body: form })
+  } catch {
+    throw new Error('Tidak dapat terhubung ke server MedCredix (backend Golang).')
+  }
+  let json: any = null
+  try { json = await res.json() } catch { /* bukan JSON */ }
+  if (res.status === 401 && getToken()) handleUnauthorized()
+  if (res.status === 413) throw new Error('Ukuran berkas melebihi 10 MB.')
+  if (!res.ok || !json?.ok) throw new Error(json?.error ?? `Unggah gagal (${res.status}).`)
+  return json.data as T
+}
+
+// Buka berkas terlindungi (butuh token) di tab baru.
+// Tab dibuka lebih dulu saat klik supaya tidak diblokir popup blocker.
+export async function openFile(path: string): Promise<void> {
+  if (DEMO_MODE) throw new Error('Pratinjau berkas tidak tersedia di mode demo.')
+  const tab = window.open('', '_blank')
+  if (tab) tab.document.title = 'Membuka dokumen…'
+  try {
+    const res = await fetch(API_BASE + withHospital(path), { headers: headers(false) })
+    if (!res.ok) {
+      let msg = `Dokumen tidak dapat dibuka (${res.status}).`
+      try { msg = (await res.json())?.error ?? msg } catch { /* abaikan */ }
+      if (res.status === 401 && getToken()) handleUnauthorized()
+      throw new Error(msg)
+    }
+    const url = URL.createObjectURL(await res.blob())
+    if (tab) tab.location.href = url
+    else window.location.assign(url)
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  } catch (e) {
+    tab?.close()
+    throw e
+  }
+}
