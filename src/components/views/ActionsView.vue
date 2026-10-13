@@ -49,6 +49,9 @@ async function loadDetail() {
   try { detail.value = await api(`/actions?id=${selected.value}`) } catch { detail.value = null }
 }
 watch(selected, loadDetail)
+// Dibuka dari hasil pencarian global.
+onMounted(() => { const id = store.takeFocus(); if (id) selected.value = id })
+watch(() => store.focusId, (id) => { if (id) selected.value = store.takeFocus() })
 
 async function patch(body: any, msg: string) {
   try {
@@ -225,7 +228,7 @@ const assignOwner = ref('')
                 </div>
                 <div class="min-w-0 text-[11px] leading-relaxed">
                   <div>
-                    <span class="font-semibold">{{ e.byName }}</span>
+                    <span class="font-semibold">{{ e.byName }}</span>{{ ' ' }}
                     <span class="text-muted-foreground">
                       {{ e.type === 'status' ? `mengubah status ${e.fromValue} → ${e.toValue}`
                         : e.type === 'created' ? 'membuat aksi'
