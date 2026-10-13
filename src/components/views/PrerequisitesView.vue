@@ -1,15 +1,16 @@
 <script setup lang="ts">
 // PrerequisitesView — port dari views-credentialing.tsx (PrerequisitesView).
-import { Info, FileText, Eye, Upload, CheckCircle2, Clock } from 'lucide-vue-next'
+import { Info, FileText, Eye, Upload, CheckCircle2, Clock, XCircle } from 'lucide-vue-next'
 import { expiryLabel, fmtDate } from '~/utils/format'
 import { useMedCredix } from '~/stores/medcredix'
 import { toast } from '~/composables/useToast'
 import { computed, onMounted, ref } from 'vue'
-import { api } from '~/composables/useApi'
+import { api, apiUpload, openFile } from '~/composables/useApi'
 import Badge from '~/components/ui/Badge.vue'
 import Button from '~/components/ui/Button.vue'
 import Dialog from '~/components/ui/Dialog.vue'
 import Input from '~/components/ui/Input.vue'
+import FileDrop from '~/components/medcredix/FileDrop.vue'
 import PageHeader from '~/components/medcredix/PageHeader.vue'
 import StatusBadge from '~/components/medcredix/StatusBadge.vue'
 
@@ -18,6 +19,8 @@ const data = ref<any>(null)
 const verifyTarget = ref<any>(null)
 const docNumber = ref('')
 const docExpiry = ref('')
+const file = ref<File | null>(null)
+const saving = ref(false)
 
 async function load() {
   try { data.value = await api('/requirements') } catch { data.value = { requirements: [] } }
@@ -29,13 +32,45 @@ const p3 = computed(() => reqs.value.find((r: any) => r.code === 'P3'))
 async function submitReq(r: any, action: string, extra?: any) {
   try {
     await api('/requirements', { method: 'PATCH', body: { id: r.id, action, ...extra } })
-    toast({ title: `${r.code}: ${action === 'verify' ? 'Terverifikasi' : action === 'submit' ? 'Diajukan' : 'Diperbarui'}` })
+    toast({ title: `${r.code}: ${action === 'verify' ? 'Terverifikasi' : action === 'invalidate' ? 'Ditolak, perlu diunggah ulang' : 'Diperbarui'}` })
     load()
     verifyTarget.value = null
   } catch (e: any) {
     toast({ title: 'Gagal', description: e?.message, variant: 'destructive' })
   }
 }
+// Buka dialog unggah: isi awal dari data yang sudah ada.
+function openUpload(r: any) {
+  verifyTarget.value = r
+  docNumber.value = r.docNumber ?? ''
+  docExpiry.value = r.docExpiry ? String(r.docExpiry).slice(0, 10) : ''
+  file.value = null
+}
+
+async function upload() {
+  const r = verifyTarget.value
+  if (!r) return
+  if (!docNumber.value.trim()) return toast({ title: 'Nomor dokumen wajib diisi', variant: 'destructive' })
+  if (!file.value && !r.hasFile) return toast({ title: 'Pilih berkas dokumen dulu', variant: 'destructive' })
+  saving.value = true
+  try {
+    await apiUpload('/requirements/upload', file.value, { id: r.id, docNumber: docNumber.value.trim(), docExpiry: docExpiry.value })
+    toast({ title: `${r.code}: Diajukan`, description: 'Menunggu verifikasi.' })
+    verifyTarget.value = null
+    load()
+  } catch (e: any) {
+    toast({ title: 'Gagal mengunggah', description: e?.message, variant: 'destructive' })
+  } finally {
+    saving.value = false
+  }
+}
+
+async function viewDoc(r: any) {
+  try { await openFile(`/requirements/file?id=${encodeURIComponent(r.id)}`) } catch (e: any) {
+    toast({ title: 'Dokumen tidak dapat dibuka', description: e?.message, variant: 'destructive' })
+  }
+}
+
 function toneCls(tone: string) {
   return tone === 'danger' ? 'bg-danger-light text-danger' : tone === 'warning' ? 'bg-warning-light text-warning' : tone === 'success' ? 'bg-success-light text-success' : 'bg-muted text-muted-foreground'
 }
@@ -80,9 +115,10 @@ const canVerify = computed(() => store.user?.permissions.includes('VERIFY'))
               <div v-if="r.fileName" class="flex items-center gap-1">
                 <FileText class="h-3 w-3" />{{ r.fileName }}
                 <Button
-                  size="sm" variant="ghost" class="h-5 w-5 p-0" aria-label="Lihat"
-                  @click="toast({ title: 'Pratinjau dokumen', description: `${r.fileName} — dibuka dari object storage terenkripsi.` })"
+                  v-if="r.hasFile" size="sm" variant="ghost" class="h-5 w-5 p-0" aria-label="Lihat"
+                  @click="viewDoc(r)"
                 ><Eye class="h-3 w-3" /></Button>
+                <span v-else class="text-[9px] italic">(berkas belum diunggah)</span>
               </div>
             </div>
           </div>
@@ -91,17 +127,19 @@ const canVerify = computed(() => store.user?.permissions.includes('VERIFY'))
           </span>
         </div>
         <div class="mt-3 flex flex-wrap gap-1.5 border-t pt-3">
-          <Button v-if="r.status === 'Belum Dilengkapi' && canEdit" size="sm" variant="outline" class="h-7 gap-1 text-xs" @click="verifyTarget = r">
-            <Upload class="h-3.5 w-3.5" /> Unggah & Ajukan
+          <Button v-if="canEdit" size="sm" variant="outline" class="h-7 gap-1 text-xs" @click="openUpload(r)">
+            <Upload class="h-3.5 w-3.5" /> {{ r.status === 'Belum Dilengkapi' ? 'Unggah & Ajukan' : 'Perbarui Dokumen' }}
           </Button>
           <Button v-if="r.status === 'Menunggu Verifikasi' && canVerify" size="sm" class="h-7 gap-1 bg-success text-xs hover:bg-success" @click="submitReq(r, 'verify')">
             <CheckCircle2 class="h-3.5 w-3.5" /> Verifikasi
           </Button>
-          <Button
-            v-if="r.fileName" size="sm" variant="ghost" class="h-7 gap-1 text-xs"
-            @click="toast({ title: 'Pratinjau', description: `${r.fileName} dibuka dari penyimpanan terenkripsi.` })"
-          ><Eye class="h-3.5 w-3.5" /> Lihat Dokumen</Button>
-          <span class="ml-auto self-center text-[9px] text-muted-foreground">Owner: {{ r.responsibleRole }}</span>
+          <Button v-if="r.status === 'Menunggu Verifikasi' && canVerify" size="sm" variant="outline" class="h-7 gap-1 text-xs text-danger" @click="submitReq(r, 'invalidate')">
+            <XCircle class="h-3.5 w-3.5" /> Tolak
+          </Button>
+          <Button v-if="r.hasFile" size="sm" variant="ghost" class="h-7 gap-1 text-xs" @click="viewDoc(r)">
+            <Eye class="h-3.5 w-3.5" /> Lihat Dokumen
+          </Button>
+          <span v-if="r.responsibleRole" class="ml-auto self-center text-[9px] text-muted-foreground">Owner: {{ r.responsibleRole }}</span>
         </div>
       </div>
     </div>
@@ -120,14 +158,15 @@ const canVerify = computed(() => store.user?.permissions.includes('VERIFY'))
             <label class="text-xs font-semibold">Tanggal kedaluwarsa</label>
             <Input v-model="docExpiry" type="date" class="mt-1 text-xs" />
           </div>
-          <div class="rounded-lg border border-dashed p-4 text-center text-[11px] text-muted-foreground">
-            <Upload class="mx-auto mb-1.5 h-4 w-4" /> Tarik berkas PDF/JPG/PNG ke sini (maks 10 MB) — tersimpan terenkripsi.
+          <div>
+            <label class="text-xs font-semibold">Berkas dokumen</label>
+            <FileDrop v-model="file" class="mt-1" :current="verifyTarget.hasFile ? verifyTarget.fileName : null" :disabled="saving" />
           </div>
         </div>
         <div class="mt-5 flex justify-end gap-2">
-          <Button variant="outline" @click="verifyTarget = null">Batal</Button>
-          <Button class="bg-brand hover:bg-brand-hover" @click="verifyTarget && submitReq(verifyTarget, 'submit', { docNumber, docExpiry })">
-            Simpan & Ajukan Verifikasi
+          <Button variant="outline" :disabled="saving" @click="verifyTarget = null">Batal</Button>
+          <Button class="bg-brand hover:bg-brand-hover" :disabled="saving" @click="upload">
+            {{ saving ? 'Mengunggah…' : 'Simpan & Ajukan Verifikasi' }}
           </Button>
         </div>
       </template>
