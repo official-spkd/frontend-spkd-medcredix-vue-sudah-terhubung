@@ -15,6 +15,13 @@ import StatusBadge from '~/components/medcredix/StatusBadge.vue'
 const store = useMedCredix()
 const { data, loading } = useIntel()
 const dims = computed(() => (data.value?.intel?.domains ?? []).filter((d: any) => ['digital', 'medication', 'diagnostic'].includes(d.key)))
+// Satuan: "%" menempel ke angka, satuan lain (ms, jam) diberi spasi.
+const fmtU = (v: unknown, unit?: string) => (v === null || v === undefined ? '-' : `${v}${!unit || unit === '%' ? '%' : ` ${unit}`}`)
+// Keterangan latensi API rata-rata (indikator Infrastruktur) di bawah tabel Digital Maturity.
+function latency(d: any) {
+  if (d.key !== 'digital') return null
+  return (d.indicators ?? []).find((i: any) => /latensi api/i.test(i.label)) ?? null
+}
 </script>
 
 <template>
@@ -49,14 +56,18 @@ const dims = computed(() => (data.value?.intel?.domains ?? []).filter((d: any) =
                   {{ i.label }}
                   <Hint>{{ i.note ?? i.source }}{{ i.fhir ? ` · FHIR: ${i.fhir}` : '' }}</Hint>
                 </td>
-                <td class="px-3 py-2.5 text-right font-display font-bold">{{ i.value }}{{ i.unit === '%' ? '%' : ` ${i.unit}` }}</td>
-                <td class="px-3 py-2.5 text-right text-muted-foreground">{{ i.threshold }}{{ i.unit === '%' ? '%' : ` ${i.unit}` }}</td>
+                <td class="px-3 py-2.5 text-right font-display font-bold">{{ fmtU(i.value, i.unit) }}</td>
+                <td class="px-3 py-2.5 text-right text-muted-foreground">{{ i.direction === 'down' ? '≤ ' : '' }}{{ fmtU(i.threshold, i.unit) }}</td>
                 <td class="px-3 py-2.5"><StatusBadge :status="i.status" /></td>
                 <td class="px-3 py-2.5 text-[10px] text-muted-foreground">{{ i.source }}{{ i.fhir ? ` · ${i.fhir}` : '' }}</td>
               </tr>
             </tbody>
           </table>
         </div>
+        <p v-if="latency(d)" class="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+          Keterangan: latensi API rata-rata <strong class="text-foreground">{{ fmtU(latency(d).value, latency(d).unit) }}</strong>
+          (ambang ≤ {{ fmtU(latency(d).threshold, latency(d).unit) }}, makin kecil makin baik) dari {{ latency(d).source || 'SIMRS' }}.
+        </p>
       </SectionCard>
     </template>
   </div>
