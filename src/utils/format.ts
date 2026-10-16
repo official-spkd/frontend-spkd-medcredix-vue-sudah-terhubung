@@ -74,6 +74,18 @@ export function canMoveAction(from: string, to: string): boolean {
   return ACTION_FLOW[to]?.includes(from) ?? false
 }
 
+// Izin yang dibutuhkan untuk memindahkan aksi ke tiap status (sama dengan actionFlow di
+// backend internal/controller/action_controller.go). Tombol status tanpa izin dinonaktifkan.
+export const ACTION_STATUS_PERM: Record<string, string> = {
+  Ditugaskan: 'ASSIGN',
+  'Dalam Pengerjaan': 'EDIT',
+  'Menunggu Verifikasi': 'EDIT',
+  Selesai: 'RESOLVE',
+  Ditutup: 'RESOLVE',
+  Ditolak: 'RESOLVE',
+  'Dibuka Kembali': 'REOPEN',
+}
+
 export const RISK_CATEGORIES = ['Kredensial', 'Klinis', 'Keselamatan Pasien', 'Klaim', 'Kualitas Data', 'Interoperabilitas', 'Medikasi', 'Operasional', 'Kepatuhan']
 
 export const DOMAIN_LABELS: Record<string, string> = {
