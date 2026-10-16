@@ -51,7 +51,7 @@ const issues = computed(() => data.value?.issues ?? [])
         <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-[10px] text-muted-foreground">
           <span>{{ i.sourceSystem }} · {{ fmtID(i.affectedRecords) }} record terdampak · {{ fmtDateTime(i.detectedAt) }}</span>
           <Button
-            size="sm" variant="ghost" class="h-6 gap-1 text-[10px] text-brand-2"
+            size="sm" variant="ghost" :disabled="!store.can('CREATE')" :title="store.can('CREATE') ? undefined : 'Butuh izin CREATE'" class="h-6 gap-1 text-[10px] text-brand-2"
             @click="store.openAction({ title: `Selesaikan: ${i.title}`, description: i.description, sourceType: 'Inspeksi', sourceRef: i.dimension, priority: i.severity })"
           >Buat Tindakan</Button>
         </div>
