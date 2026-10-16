@@ -2,7 +2,7 @@
 // WhyDrawer — "Mengapa Skor Ini?" drilldown universal:
 // Kalkulasi → Kontributor → Bukti → Risiko → Rekomendasi → Tren.
 import {
-  Calculator, CheckCircle2, AlertTriangle, Fingerprint, Radar, Lightbulb, TrendingUp, ArrowRight, FileSearch,
+  Calculator, CheckCircle2, AlertTriangle, Fingerprint, Radar, Lightbulb, TrendingUp, ArrowRight, FileSearch, Info, X,
 } from 'lucide-vue-next'
 import { AI_DISCLAIMER, fmtDate, fmtDateTime } from '~/utils/format'
 import { useMedCredix } from '~/stores/medcredix'
@@ -22,6 +22,28 @@ const store = useMedCredix()
 const data = ref<any>(null)
 const loading = ref(false)
 const tab = ref('kalkulasi')
+// Kelompok BDCS yang sedang dibuka info perhitungannya (klik kartu / ikon i).
+const openGroup = ref<string | null>(null)
+// Penjelasan isi tiap kelompok (sama dengan scoring/config.go di backend).
+const GROUP_INFO: Record<string, { label: string; weight: number; desc: string; note?: string }> = {
+  A: { label: 'Kapabilitas Klinis & SDM', weight: 25, desc: 'Clinical Workforce 50% + Sarana & Prasarana 50%.' },
+  B: { label: 'Digitalisasi & Sistem Informasi', weight: 30, desc: 'RME 25% + Infrastruktur 15% + Medikasi 20% + Diagnostik 15% + Interoperabilitas 25%.' },
+  C: {
+    label: 'Kinerja JKN', weight: 35,
+    desc: 'Konsistensi klaim BPJS vs rekam medis (CCS) 50% + kepatuhan clinical pathway (CPCS) 35% + Utilization Review (ALOS, readmisi, BOR) 15%.',
+  },
+  D: {
+    label: 'Keselamatan Pasien', weight: 10, desc: 'Skor Patient Safety 100%.',
+    note: 'Patient Safety = keamanan alergi obat 40% + obat high-alert / closed-loop 30% + dokumentasi pemulangan 30%.',
+  },
+}
+const groupDetail = computed(() => {
+  const code = openGroup.value
+  if (!code) return null
+  const g = (data.value?.kelompokDetail ?? []).find((x: any) => x.code === code)
+  return { code, ...GROUP_INFO[code], score: data.value?.kelompok?.[code], components: g?.components ?? [] }
+})
+const round1 = (n: number) => Math.round(n * 10) / 10
 const toneHex: Record<string, string> = {
   success: '#059669', warning: '#D97706', danger: '#DC2626', info: '#0284C7', muted: '#5B6B84',
 }
@@ -31,6 +53,7 @@ watch(
   async (domain) => {
     data.value = null
     tab.value = 'kalkulasi'
+    openGroup.value = store.whyGroup
     if (!domain) return
     loading.value = true
     try {
@@ -47,6 +70,14 @@ const title = computed(() =>
   data.value?.domain?.label ??
   (store.whyDomain === 'bcds' ? 'Skor Kredensial BPJS (BDCS)' : store.whyDomain === 'health' ? 'Hospital Health Score' : 'Skor'),
 )
+// Angka di cincin harus sama dengan skor yang dijelaskan: Health pakai healthScore, bukan BDCS.
+const ringValue = computed<number>(() => {
+  const d = data.value
+  if (!d) return 0
+  if (d.kind === 'health') return d.healthScore ?? 0
+  if (d.kind === 'bcds') return d.bcds?.final ?? 0
+  return d.domain?.score ?? 0
+})
 const tabs = [
   { v: 'kalkulasi', label: 'Kalkulasi', icon: Calculator },
   { v: 'kontributor', label: 'Kontributor', icon: CheckCircle2 },
@@ -63,7 +94,7 @@ const tabs = [
       <!-- Header gradien -->
       <div class="bg-gradient-brand px-6 py-5 text-white">
         <div class="flex flex-wrap items-center gap-4">
-          <ScoreRing :value="data?.domain?.score ?? data?.bcds?.final ?? data?.healthScore ?? 0" :size="92" :stroke="8" tone="info" />
+          <ScoreRing :value="ringValue" :size="92" :stroke="8" tone="info" />
           <div>
             <div class="text-[11px] font-semibold uppercase tracking-wider text-white/60">
               Mengapa Skor Ini? · Formula {{ data?.formulaVersion ?? '—' }}
@@ -112,6 +143,57 @@ const tabs = [
                 <p class="text-xs leading-relaxed text-foreground/90">{{ data.domain?.formula ?? data.formula }}</p>
               </div>
 
+              <!-- Kartu Kelompok A-D + info perhitungan: tampil di drawer BDCS dan Health Score -->
+              <div v-if="(data.kind === 'bcds' || data.kind === 'health') && data.kelompok" class="space-y-4">
+                <div v-if="data.kind === 'health'" class="text-xs font-semibold">Kelompok BDCS <span class="font-normal text-muted-foreground">(klik kartu untuk melihat perhitungannya)</span></div>
+                <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <button
+                    v-for="k in ['A', 'B', 'C', 'D']" :key="k" type="button"
+                    :class="['relative rounded-xl border bg-card p-3 text-center transition-colors hover:border-brand-2/60', openGroup === k && 'border-brand-2 ring-1 ring-brand-2/40']"
+                    :aria-expanded="openGroup === k" :title="`Lihat perhitungan Kelompok ${k}`"
+                    @click="openGroup = openGroup === k ? null : k"
+                  >
+                    <Info class="absolute right-2 top-2 h-3.5 w-3.5 text-brand-2" />
+                    <div class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Kelompok {{ k }}</div>
+                    <div class="mt-1 font-display text-xl font-bold text-brand">{{ data.kelompok?.[k] }}</div>
+                    <div class="mt-0.5 text-[9px] text-muted-foreground">bobot {{ GROUP_INFO[k].weight }}%</div>
+                  </button>
+                </div>
+                <!-- Info perhitungan kelompok (muncul saat kartu diklik) -->
+                <div v-if="groupDetail" class="rounded-xl border border-brand-2/40 bg-brand-2-light/30 p-4 text-xs">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <div class="font-semibold">Kelompok {{ groupDetail.code }}. {{ groupDetail.label }}</div>
+                      <div class="mt-0.5 text-muted-foreground">{{ groupDetail.desc }}</div>
+                    </div>
+                    <button type="button" aria-label="Tutup info kelompok" class="rounded-full p-1 text-muted-foreground hover:bg-muted" @click="openGroup = null">
+                      <X class="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <table v-if="groupDetail.components.length" class="mt-3 w-full">
+                    <thead class="text-left text-[10px] uppercase tracking-wide text-muted-foreground">
+                      <tr><th class="py-1">Komponen</th><th class="py-1 text-right">Skor</th><th class="py-1 text-right">Bobot</th><th class="py-1 text-right">Kontribusi</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="c in groupDetail.components" :key="c.key" class="border-t border-border/60">
+                        <td class="py-1.5">{{ c.label }}</td>
+                        <td class="py-1.5 text-right">{{ round1(c.score) }}</td>
+                        <td class="py-1.5 text-right">{{ Math.round(c.weight * 100) }}%</td>
+                        <td class="py-1.5 text-right">{{ round1(c.score * c.weight) }}</td>
+                      </tr>
+                      <tr class="border-t font-semibold">
+                        <td class="py-1.5" colspan="3">Skor Kelompok {{ groupDetail.code }}</td>
+                        <td class="py-1.5 text-right text-brand">{{ groupDetail.score }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <p v-if="groupDetail.note" class="mt-2 text-[11px] text-muted-foreground">{{ groupDetail.note }}</p>
+                  <p class="mt-2 text-[11px] text-muted-foreground">
+                    Masuk ke BDCS: {{ groupDetail.score }} × {{ groupDetail.weight }}% = <strong>{{ round1((groupDetail.score ?? 0) * groupDetail.weight / 100) }}</strong> poin.
+                  </p>
+                </div>
+              </div>
+
               <div v-if="data.kind === 'health' && data.domains" class="overflow-hidden rounded-xl border">
                 <table class="w-full text-xs">
                   <thead class="bg-muted/60 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -135,12 +217,6 @@ const tabs = [
               </div>
 
               <div v-if="data.kind === 'bcds'" class="space-y-4">
-                <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  <div v-for="k in ['A', 'B', 'C', 'D']" :key="k" class="rounded-xl border bg-card p-3 text-center">
-                    <div class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Kelompok {{ k }}</div>
-                    <div class="mt-1 font-display text-xl font-bold text-brand">{{ data.kelompok?.[k] }}</div>
-                  </div>
-                </div>
                 <div class="rounded-xl border p-4">
                   <div class="mb-2 text-xs font-semibold">Stage & Ambang Kelulusan</div>
                   <div class="grid grid-cols-4 gap-1.5 text-center text-[10px] sm:grid-cols-8">
@@ -287,7 +363,7 @@ const tabs = [
                     <p class="mt-1.5 text-xs font-medium leading-snug">{{ r.title }}</p>
                   </div>
                   <Button
-                    size="sm" class="h-7 shrink-0 gap-1 bg-brand-2 text-xs hover:bg-brand-2-hover"
+                    size="sm" :disabled="!store.can('CREATE')" :title="store.can('CREATE') ? undefined : 'Butuh izin CREATE'" class="h-7 shrink-0 gap-1 bg-brand-2 text-xs hover:bg-brand-2-hover"
                     @click="store.openAction({ title: r.title, sourceType: 'Skor', sourceRef: data.domain ? `DOMAIN:${data.domain.key}` : 'DOMAIN:health', priority: r.priority, suggestedOwner: r.suggestedOwner, description: `Rekomendasi dari analisis skor ${title}.` })"
                   >
                     Buat Tindakan <ArrowRight class="h-3 w-3" />
