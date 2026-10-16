@@ -21,6 +21,9 @@ onMounted(async () => {
 })
 const pathways = computed(() => data.value?.pathways ?? [])
 const episodes = computed(() => data.value?.episodes ?? [])
+// Nilai yang belum ada sumber datanya (null) ditampilkan "Belum tersedia", bukan "%" kosong.
+const has = (v: unknown) => v !== null && v !== undefined && v !== ''
+const adhCls = (v: number) => (v < 70 ? 'text-danger' : v < 80 ? 'text-warning' : 'text-success')
 const cpcs = computed(() => data.value?.cpcs ?? { score: 0, coverage: 0, adherence: 0, documentation: 0 })
 </script>
 
@@ -62,14 +65,19 @@ const cpcs = computed(() => data.value?.cpcs ?? { score: 0, coverage: 0, adheren
               <td class="px-3 py-2.5"><div class="font-semibold">{{ p.diagnosis }}</div><div class="text-[9px] text-muted-foreground">{{ p.icd10 }}</div></td>
               <td class="px-3 py-2.5 text-center">{{ p.episodeCount }}</td>
               <td class="px-3 py-2.5 text-center">
-                <span :class="['font-display font-bold', p.avgAdherence < 70 ? 'text-danger' : p.avgAdherence < 80 ? 'text-warning' : 'text-success']">{{ p.avgAdherence }}%</span>
+                <span v-if="has(p.avgAdherence)" :class="['font-display font-bold', adhCls(p.avgAdherence)]">{{ p.avgAdherence }}%</span>
+                <span v-else class="text-[10px] text-muted-foreground">Belum tersedia</span>
               </td>
               <td class="px-3 py-2.5 text-center text-muted-foreground">{{ p.standardLos }} hari</td>
               <td class="px-3 py-2.5 text-center">{{ p.deviationCount }}</td>
-              <td class="px-3 py-2.5 text-center">{{ p.documentedDeviation }}%</td>
               <td class="px-3 py-2.5 text-center">
-                <span :class="['font-display font-bold', p.costRatio > 1.1 ? 'text-danger' : p.costRatio > 1 ? 'text-warning' : 'text-success']">{{ p.costRatio }}</span>
-                <Hint>Cost ratio = biaya aktual episode ÷ tarif INA-CBGs. Di atas 1 berarti biaya melebihi tarif.</Hint>
+                <template v-if="has(p.documentedDeviation)">{{ p.documentedDeviation }}%</template>
+                <span v-else class="text-[10px] text-muted-foreground">Belum tersedia</span>
+              </td>
+              <td class="px-3 py-2.5 text-center">
+                <span v-if="has(p.costRatio)" :class="['font-display font-bold', p.costRatio > 1.1 ? 'text-danger' : p.costRatio > 1 ? 'text-warning' : 'text-success']">{{ p.costRatio }}</span>
+                <span v-else class="text-[10px] text-muted-foreground">Belum tersedia</span>
+                <Hint>{{ has(p.costRatio) ? 'Cost ratio = biaya aktual episode ÷ tarif INA-CBGs. Di atas 1 berarti biaya melebihi tarif.' : 'Cost ratio butuh data biaya episode dari billing SIMRS dan tarif INA-CBGs. Belum terintegrasi.' }}</Hint>
               </td>
             </tr>
           </tbody>
@@ -88,30 +96,39 @@ const cpcs = computed(() => data.value?.cpcs ?? { score: 0, coverage: 0, adheren
           <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div v-for="[l, v] in [['Obat', selected.medicationAdherence], ['Lab', selected.labAdherence], ['Prosedur', selected.procedureAdherence], ['LOS', selected.losAdherence]]" :key="l" class="rounded-xl border bg-card p-3 text-center">
               <div class="text-[9px] font-bold uppercase text-muted-foreground">Kepatuhan {{ l }}</div>
-              <div :class="['mt-0.5 font-display text-lg font-bold', v < 70 ? 'text-danger' : v < 80 ? 'text-warning' : 'text-success']">{{ v }}%</div>
+              <div v-if="has(v)" :class="['mt-0.5 font-display text-lg font-bold', adhCls(v as number)]">{{ v }}%</div>
+              <div v-else class="mt-1.5 text-xs font-semibold text-muted-foreground">Belum tersedia</div>
             </div>
           </div>
+          <p
+            v-if="[selected.medicationAdherence, selected.labAdherence, selected.procedureAdherence, selected.losAdherence].some((v) => !has(v))"
+            class="rounded-lg bg-muted/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground"
+          >
+            Kepatuhan yang "Belum tersedia" butuh integrasi data dari SIMRS rumah sakit: e-resep/farmasi (obat), LIS (lab),
+            dan order tindakan (prosedur). Perlu dikonfirmasi ke pihak RS terkait jalur integrasinya.
+            <template v-if="has(selected.losAdherence)">Kepatuhan LOS dihitung dari episode dengan LOS aktual ≤ LOS standar.</template>
+          </p>
           <SectionCard title="Episode & Deviasi" sub="Deviasi klinis yang terdokumentasi tidak menghukum skor — yang tercatat sah secara klinis">
             <div class="space-y-2">
               <div v-for="e in episodes.filter((x: any) => x.pathwayId === selected.id)" :key="e.id" class="rounded-xl border p-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                   <div class="flex items-center gap-2">
                     <span class="font-mono text-[10px] text-muted-foreground">{{ e.episodeNumber }}</span>
-                    <span class="text-xs font-semibold">Pasien {{ e.patientInit }}</span>
-                    <span class="text-[10px] text-muted-foreground">DPJP: {{ e.dpjp }}</span>
+                    <span v-if="has(e.patientInit)" class="text-xs font-semibold">Pasien {{ e.patientInit }}</span>
+                    <span v-if="has(e.dpjp)" class="text-[10px] text-muted-foreground">DPJP: {{ e.dpjp }}</span>
                   </div>
                   <div class="flex items-center gap-1.5">
                     <StatusBadge
                       :status="e.deviationType === 'Tidak Ada' ? 'Terpenuhi' : e.documented ? 'Deviasi Terdokumentasi' : 'Deviasi Tanpa Dokumentasi'"
                       :tone="e.deviationType === 'Tidak Ada' ? 'success' : e.documented ? 'info' : 'warning'"
                     />
-                    <span :class="['font-display text-sm font-bold', e.adherence < 70 ? 'text-danger' : e.adherence < 80 ? 'text-warning' : 'text-success']">{{ e.adherence }}%</span>
+                    <span v-if="has(e.adherence)" :class="['font-display text-sm font-bold', adhCls(e.adherence)]">{{ e.adherence }}%</span>
                   </div>
                 </div>
                 <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
-                  <span>LOS aktual {{ e.losActual }} hari vs standar {{ e.losStandard }}</span>
-                  <span>Cost ratio {{ e.costRatio }}</span>
-                  <span v-if="e.deviationType !== 'Tidak Ada'">Deviasi: {{ e.deviationType }}</span>
+                  <span v-if="has(e.losActual)">LOS aktual {{ e.losActual }} hari vs standar {{ e.losStandard }}</span>
+                  <span v-if="has(e.costRatio)">Cost ratio {{ e.costRatio }}</span>
+                  <span v-if="!['Tidak Ada', 'Deviasi'].includes(e.deviationType)">Deviasi: {{ e.deviationType }}</span>
                 </div>
                 <p v-if="e.deviationReason" class="mt-1.5 rounded-lg bg-info-light px-2.5 py-1.5 text-[10px] leading-relaxed text-info">Alasan klinis: {{ e.deviationReason }}</p>
               </div>
