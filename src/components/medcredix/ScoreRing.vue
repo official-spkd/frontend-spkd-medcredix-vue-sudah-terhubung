@@ -18,6 +18,11 @@ const toneHex: Record<string, string> = {
 }
 const r = (size - strokeWidth) / 2
 const circ = 2 * Math.PI * r
+// Tampilkan 1 angka desimal (73.5 tetap 73.5, 74.0 jadi 74) supaya sama dengan tabel perhitungan.
+const shown = computed(() => Math.round((Number(props.value) || 0) * 10) / 10)
+const isInt = computed(() => Number.isInteger(shown.value))
+const numClass = computed(() => (size > 100 ? (isInt.value ? 'text-4xl' : 'text-3xl') : isInt.value ? 'text-2xl' : 'text-lg'))
+const suffixClass = computed(() => (isInt.value ? 'text-base' : size > 100 ? 'text-xs' : 'text-[10px]'))
 const off = computed(() => circ * (1 - Math.min(100, Math.max(0, props.value)) / 100))
 </script>
 
@@ -26,7 +31,7 @@ const off = computed(() => circ * (1 - Math.min(100, Math.max(0, props.value)) /
     type="button"
     :disabled="!onClick"
     :class="['relative inline-flex items-center justify-center', onClick ? 'cursor-pointer group' : '']"
-    :aria-label="label ? `${label}: ${value} dari 100` : `Skor ${value}`"
+    :aria-label="label ? `${label}: ${shown} dari 100` : `Skor ${shown}`"
     @click="onClick?.()"
   >
     <svg :width="size" :height="size" class="-rotate-90">
@@ -38,8 +43,8 @@ const off = computed(() => circ * (1 - Math.min(100, Math.max(0, props.value)) /
       />
     </svg>
     <span class="absolute inset-0 flex flex-col items-center justify-center">
-      <span :class="['font-display font-bold leading-none', size > 100 ? 'text-4xl' : 'text-2xl']" :style="{ color: toneHex[t] }">
-        {{ Math.round(value) }}<span class="text-base font-semibold text-muted-foreground">/100</span>
+      <span :class="['font-display font-bold leading-none', numClass]" :style="{ color: toneHex[t] }">
+        {{ shown }}<span :class="[suffixClass, 'font-semibold text-muted-foreground']">/100</span>
       </span>
       <span v-if="label" class="mt-1.5 max-w-[86%] text-center text-[11px] font-medium leading-tight text-muted-foreground">{{ label }}</span>
       <span v-if="sub" class="mt-0.5 text-[10px] text-muted-foreground/80">{{ sub }}</span>
