@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // ActionsView — Action Center closed-loop (port dari views-actions.tsx).
-import { CheckCircle2, PlusCircle, MessageSquare, History, UserPlus, RotateCcw, ClipboardCheck, Send, Clock } from 'lucide-vue-next'
-import { ACTION_STATUSES, canMoveAction, fmtDate, fmtDateTime } from '~/utils/format'
+import { CheckCircle2, PlusCircle, MessageSquare, History, UserPlus, RotateCcw, ClipboardCheck, Send, Clock, Search, Info } from 'lucide-vue-next'
+import { ACTION_STATUSES, ACTION_STATUS_PERM, canMoveAction, fmtDate, fmtDateTime } from '~/utils/format'
 import { useMedCredix } from '~/stores/medcredix'
 import { toast } from '~/composables/useToast'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -38,6 +38,8 @@ async function load() {
 }
 onMounted(load)
 watch([status, priority, () => store.hospitalId], load)
+// Tindakan baru (dari tombol Tindakan Baru / Buat Tindakan di halaman mana pun) langsung muncul tanpa refresh.
+watch(() => store.dataVersion, load)
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 watch(search, () => {
   if (searchTimer) clearTimeout(searchTimer)
@@ -71,17 +73,59 @@ function isOverdue(a: any) {
   return a.dueDate && new Date(a.dueDate) < new Date() && !['Selesai', 'Ditutup'].includes(a.status)
 }
 const assignOwner = ref('')
+// Tanpa izin CREATE (Viewer, Auditor, Manajemen RS, Komite Medis): tombol Tindakan Baru tampil tapi nonaktif.
+const canCreate = computed(() => store.can('CREATE'))
+// Tiap status butuh izin sendiri (actionFlow di backend): Ditugaskan = ASSIGN, Dalam Pengerjaan /
+// Menunggu Verifikasi = EDIT, Selesai / Ditolak / Ditutup = RESOLVE, Dibuka Kembali = REOPEN.
+// Tanpa izin, tombol status tetap tampil tapi nonaktif (contoh: Manajemen RS tidak punya EDIT).
+const canAssign = computed(() => store.can('ASSIGN'))
+function statusPerm(s: string) {
+  return ACTION_STATUS_PERM[s]
+}
+function canSetStatus(s: string) {
+  const p = statusPerm(s)
+  return !!p && store.can(p)
+}
+// Status yang bisa diklik: bukan status saat ini, alurnya boleh, dan peran punya izinnya.
+function statusEnabled(from: string, to: string) {
+  return from !== to && canMoveAction(from, to) && canSetStatus(to)
+}
+function statusTitle(from: string, to: string) {
+  if (from === to) return 'Status saat ini'
+  if (!canMoveAction(from, to)) return `Tidak bisa langsung dari ${from}`
+  if (!canSetStatus(to)) return `Butuh izin ${statusPerm(to)}`
+  return ''
+}
+// Daftar izin alur kerja yang tidak dimiliki peran ini (untuk catatan di modal).
+const missingFlow = computed(() => {
+  const out: string[] = []
+  for (const [perm, label] of [
+    ['ASSIGN', 'Ditugaskan / Tugaskan ulang / ubah tenggat (ASSIGN)'],
+    ['EDIT', 'Dalam Pengerjaan / Menunggu Verifikasi (EDIT)'],
+    ['RESOLVE', 'Selesai / Ditolak / Ditutup (RESOLVE)'],
+    ['REOPEN', 'Dibuka Kembali (REOPEN)'],
+  ]) if (!store.can(perm)) out.push(label)
+  return out.join(', ')
+})
 </script>
 
 <template>
   <div class="space-y-5">
     <PageHeader title="Action Center" sub="Platform yang mengubah analitik menjadi pekerjaan — hingga skor membaik." demo>
       <template #actions>
-        <Button size="sm" class="gap-1.5 bg-brand hover:bg-brand-hover" @click="store.openAction({ title: '', sourceType: 'Manual', description: '' })">
+        <Button
+          size="sm" class="gap-1.5 bg-brand hover:bg-brand-hover"
+          :disabled="!canCreate" :title="canCreate ? undefined : 'Butuh izin CREATE'"
+          @click="store.openAction({ title: '', sourceType: 'Manual', description: '' })"
+        >
           <PlusCircle class="h-3.5 w-3.5" /> Tindakan Baru
         </Button>
       </template>
     </PageHeader>
+    <div v-if="!canCreate" class="flex items-start gap-2 rounded-xl border bg-muted/40 px-3.5 py-2.5 text-[11px] text-muted-foreground">
+      <Info class="mt-px h-3.5 w-3.5 shrink-0" />
+      <span>Peran Anda tidak memiliki izin CREATE, jadi tombol Tindakan Baru dinonaktifkan. Anda tetap bisa melihat semua tindakan.</span>
+    </div>
 
     <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
       <div v-for="s in [
@@ -95,21 +139,24 @@ const assignOwner = ref('')
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3">
-      <Input v-model="search" placeholder="Cari kode, judul, atau owner…" class="h-8 w-56 text-xs" />
-      <div class="w-44">
+    <div class="grid grid-cols-2 gap-2 rounded-xl border bg-card p-3 sm:flex sm:flex-wrap sm:items-center">
+      <div class="relative col-span-2 sm:w-64">
+        <Search class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Input v-model="search" placeholder="Cari kode, judul, atau owner…" class="h-9 w-full pl-8 text-xs" />
+      </div>
+      <div class="w-full sm:w-44">
         <Select v-model="status">
           <SelectOption value="all">Semua Status</SelectOption>
           <SelectOption v-for="s in ACTION_STATUSES" :key="s" :value="s">{{ s }}</SelectOption>
         </Select>
       </div>
-      <div class="w-36">
+      <div class="w-full sm:w-40">
         <Select v-model="priority">
           <SelectOption value="all">Semua Prioritas</SelectOption>
           <SelectOption v-for="p in ['Tinggi', 'Sedang', 'Rendah']" :key="p" :value="p">{{ p }}</SelectOption>
         </Select>
       </div>
-      <span class="ml-auto text-xs text-muted-foreground">{{ actions.length }} aksi</span>
+      <span class="col-span-2 text-right text-xs text-muted-foreground sm:ml-auto">{{ actions.length }} aksi</span>
     </div>
 
     <EmptyState
@@ -182,30 +229,37 @@ const assignOwner = ref('')
                   'rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold transition-colors',
                   detail.action.status === s ? 'border-brand bg-brand text-white'
                     : ACTION_STATUSES.indexOf(s) < ACTION_STATUSES.indexOf(detail.action.status) ? 'border-success/40 bg-success-light/50 text-success'
-                    : canMoveAction(detail.action.status, s) ? 'text-muted-foreground hover:border-brand-2/50'
+                    : statusEnabled(detail.action.status, s) ? 'text-muted-foreground hover:border-brand-2/50'
                     : 'cursor-not-allowed text-muted-foreground opacity-50',
                 ]"
-                :disabled="detail.action.status !== s && !canMoveAction(detail.action.status, s)"
-                :title="detail.action.status === s || canMoveAction(detail.action.status, s) ? '' : `Tidak bisa langsung dari ${detail.action.status}`"
-                @click="detail.action.status !== s && patch({ action: 'status', status: s }, `Status → ${s}`)"
+                :disabled="detail.action.status !== s && !statusEnabled(detail.action.status, s)"
+                :title="statusTitle(detail.action.status, s)"
+                @click="statusEnabled(detail.action.status, s) && patch({ action: 'status', status: s }, `Status → ${s}`)"
               >
                 {{ s }}
               </button>
             </div>
             <div class="mt-3 flex flex-wrap items-center gap-1.5">
-              <div class="w-52">
-                <Select v-model="assignOwner" placeholder="Tugaskan ulang…">
+              <div class="w-full sm:w-52" :title="canAssign ? undefined : 'Butuh izin ASSIGN'">
+                <Select v-model="assignOwner" placeholder="Tugaskan ulang…" :disabled="!canAssign">
                   <SelectOption v-for="u in detail.users" :key="u.id" :value="u.name">{{ u.name }}</SelectOption>
                 </Select>
               </div>
-              <Button v-if="assignOwner" size="sm" variant="outline" class="h-8 text-xs" @click="patch({ action: 'assign', owner: assignOwner }, 'Penanggung jawab diperbarui'); assignOwner = ''">
+              <Button v-if="assignOwner && canAssign" size="sm" variant="outline" class="h-8 text-xs" @click="patch({ action: 'assign', owner: assignOwner }, 'Penanggung jawab diperbarui'); assignOwner = ''">
                 <UserPlus class="h-3.5 w-3.5" /> Tugaskan
               </Button>
-              <Input type="date" class="h-8 w-40 text-xs" aria-label="Ubah tenggat" @change="(e: any) => e.target.value && patch({ action: 'assign', dueDate: e.target.value }, 'Tenggat diperbarui')" />
-              <Button v-if="canMoveAction(detail.action.status, 'Dibuka Kembali')" size="sm" variant="outline" class="h-8 gap-1 text-xs" @click="patch({ action: 'status', status: 'Dibuka Kembali' }, 'Aksi dibuka kembali')">
+              <Input type="date" class="h-8 w-40 text-xs" aria-label="Ubah tenggat" :disabled="!canAssign" :title="canAssign ? undefined : 'Butuh izin ASSIGN'" @change="(e: any) => e.target.value && patch({ action: 'assign', dueDate: e.target.value }, 'Tenggat diperbarui')" />
+              <Button
+                v-if="canMoveAction(detail.action.status, 'Dibuka Kembali')" size="sm" variant="outline" class="h-8 gap-1 text-xs"
+                :disabled="!canSetStatus('Dibuka Kembali')" :title="canSetStatus('Dibuka Kembali') ? undefined : 'Butuh izin REOPEN'"
+                @click="patch({ action: 'status', status: 'Dibuka Kembali' }, 'Aksi dibuka kembali')">
                 <RotateCcw class="h-3.5 w-3.5" /> Buka Kembali
               </Button>
             </div>
+            <p v-if="missingFlow" class="mt-3 flex items-start gap-1.5 text-[10px] leading-relaxed text-muted-foreground">
+              <Info class="mt-px h-3 w-3 shrink-0" />
+              <span>Peran Anda tidak memiliki izin untuk: {{ missingFlow }}. Tombol tersebut dinonaktifkan.</span>
+            </p>
           </div>
 
           <!-- Komentar & riwayat -->
