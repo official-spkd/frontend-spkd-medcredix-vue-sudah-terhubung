@@ -54,7 +54,7 @@ const domain = computed(() => data.value?.intel?.domains?.find((d: any) => d.key
             <table class="w-full text-xs">
               <thead class="bg-muted/60 text-left text-[10px] uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <th class="px-3 py-2.5">Spesialisasi (dasar kelas B)</th><th class="px-3 py-2.5 text-center">Wajib</th>
+                  <th class="px-3 py-2.5">Spesialisasi (dasar kelas {{ data?.intel?.hospital?.class || 'B' }})</th><th class="px-3 py-2.5 text-center">Wajib</th>
                   <th class="px-3 py-2.5 text-center">Tersedia</th><th class="px-3 py-2.5">Cakupan</th><th class="px-3 py-2.5">Status</th>
                 </tr>
               </thead>
