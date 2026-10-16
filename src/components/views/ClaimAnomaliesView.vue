@@ -1,16 +1,25 @@
 <script setup lang="ts">
 // ClaimAnomaliesView — port dari views-claims.tsx (ClaimAnomaliesView).
-import { ShieldAlert, PlusCircle, CheckCircle2, ScanSearch, Eye } from 'lucide-vue-next'
+import { ShieldAlert, PlusCircle, CheckCircle2, ScanSearch, Eye, Info, Search, X, Lock } from 'lucide-vue-next'
 import { useMedCredix } from '~/stores/medcredix'
 import { toast } from '~/composables/useToast'
 import { computed, onMounted, ref } from 'vue'
 import { api } from '~/composables/useApi'
 import Badge from '~/components/ui/Badge.vue'
 import Button from '~/components/ui/Button.vue'
+import Input from '~/components/ui/Input.vue'
 import PageHeader from '~/components/medcredix/PageHeader.vue'
 import StatusBadge from '~/components/medcredix/StatusBadge.vue'
 
 const store = useMedCredix()
+// Tombol mengikuti izin peran (internal/auth/rbac.go): Ditinjau/Klarifikasi/Konfirmasi butuh EDIT,
+// Buat Tindakan butuh CREATE. Tanpa izin, tombol tetap tampil tapi nonaktif (mis. Komite Medis).
+const canEdit = computed(() => store.can('EDIT'))
+const canCreate = computed(() => store.can('CREATE'))
+const missing = computed(() => [
+  !canEdit.value && 'Tandai Ditinjau, Klarifikasi, Konfirmasi Bermasalah (EDIT)',
+  !canCreate.value && 'Buat Tindakan (CREATE)',
+].filter(Boolean).join('; '))
 const status = ref('all')
 const data = ref<any>(null)
 
@@ -19,7 +28,13 @@ async function load() {
 }
 onMounted(load)
 
+// Tampilan tombol yang terkunci karena izin: abu-abu + ikon gembok, supaya tidak terlihat aktif
+// (sebelumnya hanya opacity 50%, dan "Konfirmasi Bermasalah" tetap merah sehingga dikira masih bisa diklik).
+const lockedCls = 'cursor-not-allowed border-dashed bg-muted/40 text-muted-foreground opacity-100 hover:bg-muted/40'
+const editHint = 'Peran Anda tidak memiliki izin EDIT'
+
 async function review(a: any, action: string) {
+  if (!canEdit.value) return
   try {
     await api('/claims', { method: 'PATCH', body: { anomalyId: a.id, action } })
     toast({ title: `Anomali ${a.claimNumber}: ${action === 'confirm' ? 'terkonfirmasi bermasalah' : action === 'clarify' ? 'diklarifikasi' : 'ditinjau'}` })
@@ -28,7 +43,18 @@ async function review(a: any, action: string) {
     toast({ title: 'Gagal', description: e?.message, variant: 'destructive' })
   }
 }
-const anomalies = computed(() => (data.value?.anomalies ?? []).filter((a: any) => status.value === 'all' || a.status === status.value))
+// Pencarian: no. klaim, judul, deskripsi, kategori, atau tingkat keparahan (tanpa beda huruf besar/kecil).
+const q = ref('')
+const norm = (s: unknown) => String(s ?? '').toLowerCase()
+const anomalies = computed(() => {
+  const terms = norm(q.value).split(/\s+/).filter(Boolean)
+  return (data.value?.anomalies ?? []).filter((a: any) => {
+    if (status.value !== 'all' && a.status !== status.value) return false
+    if (!terms.length) return true
+    const hay = [a.claimNumber, a.title, a.description, a.category, a.severity].map(norm).join(' ')
+    return terms.every((t) => hay.includes(t))
+  })
+})
 </script>
 
 <template>
@@ -37,6 +63,10 @@ const anomalies = computed(() => (data.value?.anomalies ?? []).filter((a: any) =
       title="Anomali Klaim"
       sub="Upcoding/downcoding, medication mismatch, stock-claim triangle, timeline — semua sinyal netral yang memerlukan peninjauan manusia." demo
     />
+    <div v-if="missing" class="flex items-start gap-2 rounded-xl border bg-muted/40 px-3.5 py-2.5 text-[11px] text-muted-foreground">
+      <Info class="mt-px h-3.5 w-3.5 shrink-0" />
+      <span>Peran Anda tidak memiliki izin untuk: {{ missing }}. Tombol tersebut dinonaktifkan.</span>
+    </div>
     <div class="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3">
       <ShieldAlert class="h-4 w-4 text-warning" />
       <button
@@ -46,6 +76,18 @@ const anomalies = computed(() => (data.value?.anomalies ?? []).filter((a: any) =
       >{{ s === 'all' ? 'Semua' : s }}</button>
       <span class="ml-auto text-xs text-muted-foreground">{{ anomalies.length }} sinyal</span>
     </div>
+    <div class="relative sm:w-80">
+      <Search class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      <Input v-model="q" placeholder="Cari no. klaim, judul, kategori…" class="h-9 w-full pl-8 pr-8 text-xs" />
+      <button
+        v-if="q" type="button" aria-label="Hapus pencarian"
+        class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+        @click="q = ''"
+      ><X class="h-3.5 w-3.5" /></button>
+    </div>
+    <p v-if="data && !anomalies.length" class="rounded-xl border border-dashed p-8 text-center text-xs text-muted-foreground">
+      {{ q ? `Tidak ada sinyal yang cocok dengan "${q}".` : 'Tidak ada sinyal untuk filter ini.' }}
+    </p>
 
     <div class="grid gap-3 lg:grid-cols-2">
       <div
@@ -67,13 +109,32 @@ const anomalies = computed(() => (data.value?.anomalies ?? []).filter((a: any) =
           <strong>Cara penyelesaian:</strong> {{ a.recommendation }}
         </div>
         <div class="mt-2.5 flex flex-wrap gap-1.5 border-t pt-3">
-          <Button v-if="a.status === 'Baru'" size="sm" variant="outline" class="h-7 gap-1 text-[11px]" @click="review(a, 'review')"><Eye class="h-3 w-3" /> Tandai Ditinjau</Button>
-          <Button v-if="a.status !== 'Diklarifikasi'" size="sm" variant="outline" class="h-7 gap-1 text-[11px]" @click="review(a, 'clarify')"><CheckCircle2 class="h-3 w-3" /> Klarifikasi (terjelaskan)</Button>
-          <Button v-if="a.status !== 'Terkonfirmasi Bermasalah'" size="sm" variant="outline" class="h-7 gap-1 text-[11px] text-danger" @click="review(a, 'confirm')"><ScanSearch class="h-3 w-3" /> Konfirmasi Bermasalah</Button>
-          <Button
-            size="sm" variant="ghost" class="ml-auto h-7 gap-1 text-[11px]"
-            @click="store.openAction({ title: `Selesaikan sinyal ${a.category} pada ${a.claimNumber}`, description: a.description, sourceType: 'Klaim', sourceRef: a.claimNumber ?? '', priority: a.severity })"
-          ><PlusCircle class="h-3 w-3" /> Buat Tindakan</Button>
+          <!-- Tombol nonaktif dibungkus span agar tooltip tetap muncul (button disabled tidak menerima hover). -->
+          <span v-if="a.status === 'Baru'" :title="canEdit ? undefined : editHint" :class="!canEdit && 'cursor-not-allowed'">
+            <Button
+              size="sm" variant="outline" :class="['h-7 gap-1 text-[11px]', !canEdit && lockedCls]"
+              :disabled="!canEdit" :aria-disabled="!canEdit" @click="review(a, 'review')"
+            ><Lock v-if="!canEdit" class="h-3 w-3" /><Eye v-else class="h-3 w-3" /> Tandai Ditinjau</Button>
+          </span>
+          <span v-if="a.status !== 'Diklarifikasi'" :title="canEdit ? undefined : editHint" :class="!canEdit && 'cursor-not-allowed'">
+            <Button
+              size="sm" variant="outline" :class="['h-7 gap-1 text-[11px]', !canEdit && lockedCls]"
+              :disabled="!canEdit" :aria-disabled="!canEdit" @click="review(a, 'clarify')"
+            ><Lock v-if="!canEdit" class="h-3 w-3" /><CheckCircle2 v-else class="h-3 w-3" /> Klarifikasi (terjelaskan)</Button>
+          </span>
+          <span v-if="a.status !== 'Terkonfirmasi Bermasalah'" :title="canEdit ? undefined : editHint" :class="!canEdit && 'cursor-not-allowed'">
+            <Button
+              size="sm" variant="outline" :class="['h-7 gap-1 text-[11px]', canEdit ? 'text-danger' : lockedCls]"
+              :disabled="!canEdit" :aria-disabled="!canEdit" @click="review(a, 'confirm')"
+            ><Lock v-if="!canEdit" class="h-3 w-3" /><ScanSearch v-else class="h-3 w-3" /> Konfirmasi Bermasalah</Button>
+          </span>
+          <span class="ml-auto" :title="canCreate ? undefined : 'Peran Anda tidak memiliki izin CREATE'" :class="!canCreate && 'cursor-not-allowed'">
+            <Button
+              size="sm" variant="ghost" :class="['h-7 gap-1 text-[11px]', !canCreate && 'text-muted-foreground opacity-60']"
+              :disabled="!canCreate" :aria-disabled="!canCreate"
+              @click="store.openAction({ title: `Selesaikan sinyal ${a.category} pada ${a.claimNumber}`, description: a.description, sourceType: 'Klaim', sourceRef: a.claimNumber ?? '', priority: a.severity })"
+            ><Lock v-if="!canCreate" class="h-3 w-3" /><PlusCircle v-else class="h-3 w-3" /> Buat Tindakan</Button>
+          </span>
         </div>
       </div>
     </div>
