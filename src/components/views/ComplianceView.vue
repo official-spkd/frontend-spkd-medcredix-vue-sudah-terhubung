@@ -66,7 +66,7 @@ const regs = computed(() => data.value?.regulations ?? [])
 
     <SectionCard title="Matriks Kepatuhan (Compliance Matrix)" :sub="`${mappings.length} pemetaan requirement → fitur → validasi → bukti`">
       <template #action>
-        <div class="w-40">
+        <div class="w-full sm:w-44">
           <Select v-model="status">
             <SelectOption value="all">Semua Status</SelectOption>
             <SelectOption v-for="s in ['Patuh', 'Sebagian', 'Belum', 'Sedang Ditinjau']" :key="s" :value="s">{{ s }}</SelectOption>
