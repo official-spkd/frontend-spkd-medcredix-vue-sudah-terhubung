@@ -18,6 +18,20 @@ const utils = computed(() => data.value?.utilization ?? [])
 const latest = computed(() => utils.value[utils.value.length - 1])
 const complaints = computed(() => data.value?.complaints ?? [])
 const lastC = computed(() => complaints.value[complaints.value.length - 1])
+
+// Grafik bertumpuk per kategori keluhan; warna tiap kategori tetap sama di semua bulan.
+const CATS = [
+  { key: 'antrian', label: 'Antrian', color: '#14285C' },
+  { key: 'pelayanan', label: 'Pelayanan', color: '#2198A5' },
+  { key: 'obat', label: 'Obat', color: '#7C93C4' },
+  { key: 'administrasi', label: 'Administrasi', color: '#66C3CE' },
+  { key: 'fasilitas', label: 'Fasilitas', color: '#D97706' },
+  { key: 'lainnya', label: 'Lainnya', color: '#94A3B8' },
+]
+const num = (v: unknown) => v !== null && v !== undefined && v !== '' && !Number.isNaN(Number(v))
+const complaintSets = computed(() =>
+  CATS.map((k) => ({ label: k.label, data: complaints.value.map((c: any) => Number(c[k.key] ?? 0)), color: k.color, stack: 'a' })),
+)
 </script>
 
 <template>
@@ -61,22 +75,24 @@ const lastC = computed(() => complaints.value[complaints.value.length - 1])
         title="Keluhan & Kepuasan JKN"
         :sub="`Sumber: JKN Mobile (P-Care) & portal pengaduan BPJS · ${lastC ? `${fmtID(lastC.total)} keluhan, kepuasan ${lastC.satisfaction}%` : ''}`"
       >
-        <ChartBar
-          :labels="complaints.map((c: any) => c.month.slice(5))"
-          :datasets="[
-            { label: 'Antrian', data: complaints.map((c: any) => c.antrian), color: '#14285C', stack: 'a' },
-            { label: 'Pelayanan', data: complaints.map((c: any) => c.pelayanan), color: '#2198A5', stack: 'a' },
-            { label: 'Obat', data: complaints.map((c: any) => c.obat), color: '#7C93C4', stack: 'a' },
-            { label: 'Administrasi', data: complaints.map((c: any) => c.administrasi), color: '#66C3CE', stack: 'a' },
-            { label: 'Fasilitas', data: complaints.map((c: any) => c.fasilitas), color: '#D97706', stack: 'a' },
-            { label: 'Lainnya', data: complaints.map((c: any) => c.lainnya), color: '#94A3B8', stack: 'a' },
-          ]"
-          :height="208" stacked :legend="true"
-        />
-        <p class="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-          Total keluhan per 1.000 kunjungan: <strong class="text-foreground">{{ lastC?.per1000 }}</strong> vs rata-rata RS sejenis
-          <strong class="text-foreground">{{ lastC?.peerAvg }}</strong> (peer benchmark, periode sama).
-        </p>
+        <p v-if="!complaints.length" class="py-16 text-center text-xs text-muted-foreground">Belum ada data keluhan JKN untuk rumah sakit ini.</p>
+        <template v-else>
+          <ChartBar
+            :labels="complaints.map((c: any) => c.month.slice(5))"
+            :datasets="complaintSets"
+            :height="208" stacked :legend="true"
+          />
+          <p class="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+            <template v-if="num(lastC?.per1000)">
+              Total keluhan per 1.000 kunjungan: <strong class="text-foreground">{{ lastC.per1000 }}</strong> vs rata-rata RS sejenis
+              <strong class="text-foreground">{{ lastC.peerAvg }}</strong> (peer benchmark, periode sama).
+            </template>
+            <template v-else>
+              Keluhan per 1.000 kunjungan belum dapat dihitung (butuh data jumlah kunjungan dari SIMRS).
+              <template v-if="num(lastC?.peerAvg)">Rata-rata RS sejenis: <strong class="text-foreground">{{ lastC.peerAvg }}</strong> per 1.000 kunjungan.</template>
+            </template>
+          </p>
+        </template>
       </SectionCard>
 
       <SectionCard title="Riwayat Metrik Utilization" sub="Definisi: ALOS = hari perawatan ÷ pasien keluar; BOR = hari rawat ÷ kapasitas">
