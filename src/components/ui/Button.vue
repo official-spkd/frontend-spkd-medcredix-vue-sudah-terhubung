@@ -18,7 +18,7 @@ const variantCls: Record<string, string> = {
   secondary: 'bg-muted text-foreground shadow-xs hover:bg-muted/70',
   link: 'text-brand-2 underline-offset-4 hover:underline',
   brand: 'bg-brand-2 text-white shadow-xs hover:bg-brand-2-hover',
-  inverse: 'bg-white text-brand shadow-xs hover:bg-white/90 hover:text-brand-hover',
+  inverse: 'bg-white text-brand shadow-xs hover:bg-white/90 hover:text-brand-hover dark:text-[#14285c] dark:hover:text-[#1b3878]', // latar tetap putih di mode gelap, jadi teksnya tetap navy
 }
 const sizeCls: Record<string, string> = {
   default: 'h-9 px-4 py-2 text-sm',
