@@ -26,14 +26,9 @@ function badge(key?: string): number {
 
 <template>
   <nav class="flex h-full flex-col" aria-label="Navigasi utama">
-    <div class="flex items-center gap-2.5 px-4 pb-4 pt-5">
-      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/95">
-        <svg viewBox="0 0 32 32" class="h-6 w-6"><rect width="32" height="32" rx="7" fill="#14285C" /><path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" fill="#2198A5" /></svg>
-      </div>
-      <div class="min-w-0">
-        <div class="font-display text-[15px] font-bold leading-none text-white">MedCredix</div>
-        <div class="mt-0.5 truncate text-[9px] font-semibold uppercase tracking-[0.14em] text-white/50">by SPKD</div>
-      </div>
+    <!-- pr-12 di layar kecil: beri ruang tombol tutup (X) menu mobile -->
+    <div class="px-4 pb-4 pr-12 pt-5 lg:pr-4">
+      <img src="/logo/logo.svg" alt="MedCredix — Medical Credentialing Intelligence" class="h-14 w-auto max-w-full object-contain" />
     </div>
     <div class="flex-1 space-y-4 overflow-y-auto px-2.5 pb-4 scrollbar-thin">
       <div v-for="g in nav" :key="g.id">
