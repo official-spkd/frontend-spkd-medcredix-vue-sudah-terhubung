@@ -4,7 +4,7 @@
 import { Loader2, PlusCircle } from 'lucide-vue-next'
 import { useMedCredix } from '~/stores/medcredix'
 import { toast } from '~/composables/useToast'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { api } from '~/composables/useApi'
 import Button from '~/components/ui/Button.vue'
 import Dialog from '~/components/ui/Dialog.vue'
@@ -22,7 +22,24 @@ const title = ref('')
 const desc = ref('')
 const expected = ref('')
 const saving = ref(false)
-const users = ref<{ id: string; name: string; role: string }[]>([])
+type UserBrief = { id: string; name: string; role: string; roleLabel?: string; active?: boolean; hospitalId?: string }
+const users = ref<UserBrief[]>([])
+// Peran yang hanya melihat tidak bisa jadi penanggung jawab tindakan.
+const VIEW_ONLY_ROLES = ['auditor', 'viewer']
+// Akun lintas RS (tanpa RS): tidak bisa jadi penanggung jawab (sama dengan ownerNotAssignable di backend).
+const CROSS_TENANT_ROLES = ['super_admin']
+// Penanggung jawab hanya pengguna aktif di RS ini (isolasi tenant), bukan Auditor/Viewer.
+// GET /api/settings di backend sudah memfilter per RS dan TIDAK mengirim hospitalId per pengguna,
+// jadi hospitalId hanya dicek bila memang ada (mode demo). Dulu dicek wajib → daftar selalu kosong.
+const owners = computed(() =>
+  users.value.filter((u) =>
+    u.active !== false
+    && !VIEW_ONLY_ROLES.includes(u.role)
+    && !CROSS_TENANT_ROLES.includes(u.role)
+    && (!u.hospitalId || !store.hospitalId || u.hospitalId === store.hospitalId),
+  ),
+)
+const loadingUsers = ref(false)
 
 watch(
   () => store.actionDraft,
@@ -34,10 +51,15 @@ watch(
     priority.value = draft.priority ?? 'Sedang'
     owner.value = draft.suggestedOwner ?? ''
     dueDate.value = ''
+    loadingUsers.value = true
     try {
-      const r = await api<{ users: { id: string; name: string; role: string }[] }>('/settings')
+      const r = await api<{ users: UserBrief[] }>(`/settings${store.hospitalId ? `?hospitalId=${store.hospitalId}` : ''}`)
       users.value = r.users ?? []
-    } catch { /* abaikan */ }
+    } catch {
+      users.value = []
+    } finally {
+      loadingUsers.value = false
+    }
   },
   { immediate: true },
 )
@@ -64,6 +86,7 @@ async function submit() {
     })
     toast({ title: 'Tindakan dibuat', description: `${title.value} — lacak progresnya di Action Center.` })
     store.closeAction()
+    store.bumpData() // daftar Action Center & badge sidebar langsung memuat ulang
   } catch (e: any) {
     toast({ title: 'Gagal membuat tindakan', description: e?.message, variant: 'destructive' })
   } finally {
@@ -107,9 +130,12 @@ async function submit() {
       </div>
       <div class="grid gap-1.5">
         <Label class="text-xs font-semibold">Penanggung Jawab</Label>
-        <Select v-model="owner" placeholder="Pilih penanggung jawab">
-          <SelectOption v-for="u in users" :key="u.id" :value="u.name">{{ u.name }}</SelectOption>
+        <Select v-model="owner" :placeholder="loadingUsers ? 'Memuat daftar pengguna…' : 'Pilih penanggung jawab'">
+          <SelectOption v-for="u in owners" :key="u.id" :value="u.name">{{ u.name }}{{ u.roleLabel ? ` (${u.roleLabel})` : '' }}</SelectOption>
         </Select>
+        <p v-if="!loadingUsers && !owners.length" class="text-[10px] text-muted-foreground">
+          Belum ada pengguna aktif di RS ini yang bisa ditugaskan. Tindakan tetap bisa dibuat tanpa penanggung jawab.
+        </p>
       </div>
       <div class="grid gap-1.5">
         <Label for="act-expected" class="text-xs font-semibold">Hasil yang Diharapkan</Label>
