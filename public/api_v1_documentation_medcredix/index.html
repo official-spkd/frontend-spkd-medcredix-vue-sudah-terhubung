@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MedCredix API</title>
+  <link rel="stylesheet" href="swagger-ui.css">
+  <style>
+    html { box-sizing: border-box; overflow-y: scroll; }
+    *, *:before, *:after { box-sizing: inherit; }
+    body { margin: 0; background: #fafafa; }
+    .swagger-ui .info .title small.version-stamp { display: none; }
+    .swagger-ui .info .markdown h3 { margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e3e6ea; font-size: 18px; }
+    .swagger-ui .info .markdown ol { margin: 0; padding-left: 20px; }
+    .swagger-ui .info .markdown ol li { margin: 4px 0; line-height: 1.6; }
+    .swagger-ui .info .markdown ul { margin: 0; padding-left: 20px; }
+    .swagger-ui .info .markdown table { border-collapse: collapse; width: 100%; margin: 6px 0 12px; font-size: 13px; background: #fff; }
+    .swagger-ui .info .markdown th, .swagger-ui .info .markdown td { border: 1px solid #d9dee5; padding: 8px 12px; text-align: left; }
+    .swagger-ui .info .markdown th { background: #eef1f5; font-weight: 700; color: #3b4151; }
+    .swagger-ui .info .markdown tbody tr:nth-child(even) td { background: #f8f9fb; }
+    .swagger-ui .info .markdown td a { color: inherit; text-decoration: none; pointer-events: none; }
+    .swagger-ui .info .markdown td:first-child { width: 1%; white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="swagger-ui-bundle.js"></script>
+  <script src="swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function () {
+      window.ui = SwaggerUIBundle({
+        url: 'doc.json',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+        plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+        layout: 'StandaloneLayout',
+        defaultModelsExpandDepth: -1,
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        // Use the same scheme as this page (http on localhost, https on a tunnel)
+        onComplete: function () {
+          window.ui.specActions.setScheme(location.protocol.replace(':', ''))
+        },
+        // After a successful sign in, apply the token to Authorize
+        responseInterceptor: function (res) {
+          try {
+            if (/\/api\/auth$/.test(res.url) && res.ok && res.body && res.body.data && res.body.data.token) {
+              var def = window.ui.authSelectors.definitionsToAuthorize().find(function (m) { return m.has('Bearer') }).get('Bearer')
+              window.ui.authActions.authorize({ Bearer: { name: 'Bearer', schema: def, value: 'Bearer ' + res.body.data.token } })
+            }
+          } catch (e) {}
+          return res
+        }
+      })
+    }
+  </script>
+</body>
+</html>
