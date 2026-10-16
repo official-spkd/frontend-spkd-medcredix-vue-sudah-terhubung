@@ -96,7 +96,7 @@ const kLabel = computed(() => {
               <button
                 v-for="k in ['A', 'B', 'C', 'D']" :key="k"
                 class="rounded-lg bg-white/10 px-2.5 py-1.5 text-[10px] font-semibold backdrop-blur-sm transition-colors hover:bg-white/20"
-                @click="store.openWhy('bcds')"
+                @click="store.openWhy('bcds', k)"
               >
                 Kelompok {{ k }}: <span class="font-display text-xs">{{ intel.kelompok[k] }}</span>
               </button>
@@ -111,7 +111,7 @@ const kLabel = computed(() => {
         <div class="grid gap-4 sm:grid-cols-2">
           <SectionCard
             :title="'Risk Radar'"
-            :sub="`${data.riskSummary.tinggi} tinggi · ${data.riskSummary.sedang} sedang · ${data.riskSummary.rendah} rendah`"
+            :sub="`Aktif: ${data.riskSummary.tinggi} tinggi · ${data.riskSummary.sedang} sedang · ${data.riskSummary.rendah} rendah`"
           >
             <template #icon><Radar class="h-4 w-4" /></template>
             <template #action>
