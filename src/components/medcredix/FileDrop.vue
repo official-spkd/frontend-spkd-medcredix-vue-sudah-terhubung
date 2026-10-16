@@ -6,9 +6,15 @@ import { FileText, Upload, X } from 'lucide-vue-next'
 import { ref } from 'vue'
 
 const model = defineModel<File | null>({ default: null })
-const props = withDefaults(defineProps<{ maxMb?: number; current?: string | null; disabled?: boolean }>(), { maxMb: 10 })
+const props = withDefaults(defineProps<{ maxMb?: number; current?: string | null; disabled?: boolean }>(), { maxMb: 5 })
 
-const ACCEPT = ['application/pdf', 'image/jpeg', 'image/png']
+// Hanya PDF dan Word (DOC/DOCX), sama dengan internal/storage di backend. Gambar (JPG/PNG) ditolak.
+const ACCEPT = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
+const EXT = /\.(pdf|docx?)$/i
 const input = ref<HTMLInputElement | null>(null)
 const dragging = ref(false)
 const error = ref('')
@@ -16,9 +22,10 @@ const error = ref('')
 function choose(f: File | undefined | null) {
   error.value = ''
   if (!f) return
-  const okType = ACCEPT.includes(f.type) || /\.(pdf|jpe?g|png)$/i.test(f.name)
+  // Ekstensi wajib cocok; tipe dari browser bisa kosong untuk .doc, jadi ekstensi yang jadi patokan.
+  const okType = EXT.test(f.name) && (!f.type || ACCEPT.includes(f.type))
   if (!okType) {
-    error.value = 'Jenis berkas harus PDF, JPG, atau PNG.'
+    error.value = 'Jenis berkas harus PDF atau Word (DOC/DOCX). Gambar seperti JPG/PNG tidak diterima.'
     return
   }
   if (f.size > props.maxMb * 1024 * 1024) {
@@ -47,7 +54,7 @@ function sizeLabel(n: number) {
 
 <template>
   <div>
-    <input ref="input" type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" :disabled="disabled" @change="onPick" />
+    <input ref="input" type="file" class="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" :disabled="disabled" @change="onPick" />
     <div
       v-if="model"
       class="flex items-center gap-2.5 rounded-lg border border-brand-2/40 bg-brand-2-light/40 p-3 text-xs"
@@ -77,7 +84,7 @@ function sizeLabel(n: number) {
       @drop.prevent="onDrop"
     >
       <Upload class="mx-auto mb-1.5 h-4 w-4" />
-      <span class="font-semibold text-brand-2">Klik untuk memilih</span> atau tarik berkas PDF/JPG/PNG ke sini (maks {{ maxMb }} MB).
+      <span class="font-semibold text-brand-2">Klik untuk memilih</span> atau tarik berkas PDF/DOC/DOCX ke sini (maks {{ maxMb }} MB).
       <span v-if="current" class="mt-1 block text-[10px]">Berkas saat ini: {{ current }} (biarkan kosong untuk tetap memakainya)</span>
     </button>
     <p v-if="error" class="mt-1.5 text-[11px] font-medium text-danger">{{ error }}</p>
