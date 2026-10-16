@@ -53,8 +53,8 @@ const interopSources = computed(() => (src.value?.sources ?? []).filter((s: any)
               <tbody>
                 <tr v-for="(i, idx) in d?.indicators ?? []" :key="idx" class="border-t">
                   <td class="px-3 py-2.5 font-medium">{{ i.label }}</td>
-                  <td class="px-3 py-2.5 text-right font-display font-bold">{{ i.value }}%</td>
-                  <td class="px-3 py-2.5 text-right text-muted-foreground">{{ i.threshold }}%</td>
+                  <td class="px-3 py-2.5 text-right font-display font-bold">{{ i.value }}{{ !i.unit || i.unit === '%' ? '%' : ` ${i.unit}` }}</td>
+                  <td class="px-3 py-2.5 text-right text-muted-foreground">{{ i.threshold }}{{ !i.unit || i.unit === '%' ? '%' : ` ${i.unit}` }}</td>
                   <td class="px-3 py-2.5"><StatusBadge :status="i.status" /></td>
                 </tr>
               </tbody>
