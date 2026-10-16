@@ -148,7 +148,7 @@ export async function apiUpload<T = any>(path: string, file: File | null, fields
   let json: any = null
   try { json = await res.json() } catch { /* bukan JSON */ }
   if (res.status === 401 && getToken()) handleUnauthorized()
-  if (res.status === 413) throw new Error('Ukuran berkas melebihi 10 MB.')
+  if (res.status === 413) throw new Error('Ukuran berkas melebihi 5 MB.')
   if (!res.ok || !json?.ok) throw new Error(json?.error ?? `Unggah gagal (${res.status}).`)
   return json.data as T
 }
