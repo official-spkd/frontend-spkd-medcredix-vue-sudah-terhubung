@@ -101,19 +101,19 @@ function toneCls(tone: string) {
       sub="Berkas STR, SIP, dan sertifikat tiap praktisi. Berkas disimpan terenkripsi dan setiap kali dibuka tercatat di Audit Trail."
     />
 
-    <div class="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3">
-      <div class="relative w-72">
+    <div class="grid grid-cols-2 gap-2 rounded-xl border bg-card p-3 sm:flex sm:flex-wrap sm:items-center">
+      <div class="relative col-span-2 sm:w-72">
         <Search class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-        <Input v-model="q" placeholder="Cari praktisi, jenis, atau nomor…" class="h-9 pl-8 text-xs" />
+        <Input v-model="q" placeholder="Cari praktisi, jenis, atau nomor…" class="h-9 w-full pl-8 text-xs" />
       </div>
-      <div class="w-44">
+      <div class="col-span-2 w-full sm:w-44">
         <Select v-model="docFilter">
           <SelectOption value="all">Semua Kredensial</SelectOption>
           <SelectOption value="ada">Sudah ada berkas</SelectOption>
           <SelectOption value="belum">Belum ada berkas</SelectOption>
         </Select>
       </div>
-      <span class="ml-auto text-xs text-muted-foreground">{{ list.length }} kredensial · {{ documents.filter((d) => d.hasFile).length }} berkas</span>
+      <span class="col-span-2 text-right text-xs text-muted-foreground sm:ml-auto">{{ list.length }} kredensial · {{ documents.filter((d) => d.hasFile).length }} berkas</span>
     </div>
 
     <div v-if="loading" class="py-16 text-center text-sm text-muted-foreground">Memuat dokumen…</div>
