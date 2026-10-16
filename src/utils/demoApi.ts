@@ -7,6 +7,8 @@
 // - Perubahan data (PATCH/POST) tersimpan di memori selama tab terbuka; muat ulang = reset ke data awal.
 // - Skor (Health/BDCS/Trust/CCS dst.) adalah hasil hitung statis dari snapshot — tidak dihitung ulang.
 
+import { ACTION_STATUS_PERM } from '~/utils/format'
+
 type Row = Record<string, any>
 
 class ApiErr extends Error {
@@ -492,7 +494,10 @@ handlers['PATCH /actions'] = ({ user, q, body }) => {
   }
 
   if (body.action === 'status') {
-    requirePerm(user, 'EDIT')
+    // Izin per status tujuan, sama dengan actionFlow di backend.
+    const perm = ACTION_STATUS_PERM[body.status]
+    if (!perm) throw new ApiErr(400, `Status aksi tidak bisa diubah ke "${body.status}".`)
+    requirePerm(user, perm)
     const prev = a.status
     a.status = body.status
     if (body.note !== undefined && body.note !== null) a.progressNote = body.note
@@ -564,6 +569,22 @@ handlers['GET /credentials'] = ({ user, q }) => {
   return { credentials, total: credentials.length }
 }
 
+handlers['PATCH /documents'] = ({ user, q, body }) => {
+  if (!body?.id || !['verify', 'reject'].includes(body.action)) throw new ApiErr(400, 'id dan action (verify/reject) wajib diisi.')
+  const hid = resolveHospital(user, q.get('hospitalId'))
+  const doc = inH('CredentialDocument', hid).find((d) => d.id === body.id)
+  if (!doc) throw new ApiErr(404, 'Dokumen tidak ditemukan.')
+  requirePerm(user, 'VERIFY')
+  if (doc.status !== 'Menunggu Verifikasi') throw new ApiErr(409, `Dokumen sudah berstatus "${doc.status}".`)
+  const next = body.action === 'verify' ? 'Diverifikasi' : 'Ditolak'
+  logAudit({
+    hospitalId: hid, actor: user, action: body.action, entityType: 'Dokumen', entityId: doc.id,
+    description: `Dokumen ${doc.fileName}: ${next}`, before: doc.status, after: next,
+  })
+  doc.status = next
+  return { ...doc, hasFile: false }
+}
+
 handlers['PATCH /credentials'] = ({ user, q, body }) => {
   if (!body) throw new ApiErr(400, 'Payload tidak valid.')
   const hid = resolveHospital(user, q.get('hospitalId'))
@@ -596,6 +617,14 @@ handlers['PATCH /credentials'] = ({ user, q, body }) => {
     cred.approvedAt = now
   }
   cred.updatedAt = now
+  // Dokumen "Menunggu Verifikasi" ikut berubah begitu kredensial lolos verifikasi (atau ditolak komite).
+  const docStatus = ['verify', 'review', 'approve', 'activate', 'reactivate'].includes(body.action)
+    ? 'Diverifikasi' : body.action === 'reject' ? 'Ditolak' : null
+  if (docStatus) {
+    for (const d of inH('CredentialDocument', hid)) {
+      if (d.credentialId === cred.id && d.status === 'Menunggu Verifikasi') d.status = docStatus
+    }
+  }
   const auditAction =
     body.action === 'approve' || body.action === 'activate' ? 'approve'
       : body.action === 'verify' || body.action === 'review' ? 'verify' : 'update'
@@ -819,6 +848,18 @@ const REPORT_TYPES: Record<string, { title: string; desc: string }> = {
 
 const ymd = (s?: string | null) => (s ? String(s).slice(0, 10) : '—')
 
+// Skor terkini (sama dengan Dashboard) untuk dibandingkan dengan snapshot laporan, seperti backend.
+function reportCurrent(hid: string): Row | null {
+  const intel = DB.intel[hid]
+  if (!intel) return null
+  return {
+    healthScore: intel.healthScore, bcds: intel.bcds.final, stage: intel.bcds.stage,
+    trust: intel.trust.score, ccs: intel.ccs.score, cpcs: intel.cpcs.score,
+    domain: intel.domains.map((d: Row) => ({ domain: d.label, skor: d.score, bobot: d.weight })),
+    computedAt: intel.computedAt ?? nowIso(), versiFormula: DB.formulaVersion,
+  }
+}
+
 handlers['GET /reports'] = ({ user, q }) => {
   const hid = resolveHospital(user, q.get('hospitalId'))
   const id = q.get('id')
@@ -828,11 +869,12 @@ handlers['GET /reports'] = ({ user, q }) => {
     if (!snap) throw new ApiErr(404, 'Laporan tidak ditemukan.')
     let content: any = null
     try { content = JSON.parse(snap.contentJson) } catch { /* abaikan */ }
-    return { report: snap, content }
+    return { report: snap, content, current: reportCurrent(hid) }
   }
   return {
     reports: sortBy(inH('ReportSnapshot', hid), ['generatedAt', 'desc']),
     types: Object.entries(REPORT_TYPES).map(([type, m]) => ({ type, title: m.title, desc: m.desc })),
+    current: reportCurrent(hid),
   }
 }
 
@@ -851,7 +893,10 @@ handlers['POST /reports'] = ({ user, q, body }) => {
       namaRS: hospital.name, kelas: hospital.class, kota: hospital.city, periode: period,
       healthScore: intel.healthScore, bcds: intel.bcds.final, stage: intel.bcds.stage,
       trust: intel.trust.score, ccs: intel.ccs.score, cpcs: intel.cpcs.score,
+      dihitungPada: intel.computedAt ?? nowIso(), versiFormula: DB.formulaVersion,
     },
+    // 9 domain disimpan di semua jenis laporan supaya bisa dibandingkan dengan Dashboard.
+    domain: intel.domains.map((d: Row) => ({ domain: d.label, skor: d.score, bobot: d.weight })),
   }
   switch (typ) {
     case 'kredensial': {
@@ -905,7 +950,6 @@ handlers['POST /reports'] = ({ user, q, body }) => {
       break
     }
     default: {
-      content.domain = intel.domains.map((d: Row) => ({ domain: d.label, skor: d.score, bobot: d.weight }))
       content.tren = intel.trend
       content.saran = sortBy<Row>([...intel.domains], ['score', 'asc']).slice(0, 3).map((d) => ({
         domain: d.label, skor: d.score, catatan: d.negatives?.length ? d.negatives[0] : 'Pertahankan kinerja',
@@ -1143,7 +1187,7 @@ async function sha256Hex(s: string): Promise<string | null> {
 }
 
 async function login(body: any) {
-  const email = String(body?.email ?? '').toLowerCase().trim()
+  const email = String(body?.email ?? '').trim()
   const password = String(body?.password ?? '')
   if (!email || !password) throw new ApiErr(400, 'Email dan kata sandi wajib diisi.')
   const u = T('User').find((x) => x.email === email)
