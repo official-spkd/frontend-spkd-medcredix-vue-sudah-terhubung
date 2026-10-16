@@ -79,7 +79,7 @@
 
   --success: #059669;
   --success-light: #e7f6f0;
-  --warning: #d97706;
+  --warning: #b45309; /* amber-700: teks peringatan tetap terbaca di latar terang (kontras >= 4.5) */
   --warning-light: #fdf3e3;
   --danger: #dc2626;
   --danger-light: #fdebeb;
@@ -171,6 +171,13 @@
   --sidebar-ring: #3fb3c0;
 }
 
+/* Mode gelap: warna solid brand dan status dibuat cerah, jadi teks putih di atasnya hampir tak terbaca.
+   Teks di atas latar solid itu dipaksa gelap (sama dengan --primary-foreground). Sengaja di luar @layer
+   supaya menang dari utilitas text-white / text-brand tanpa perlu mengubah tiap tombol dan badge. */
+.dark :is(.bg-brand, .bg-brand-2, .bg-success, .bg-warning, .bg-danger, .bg-info) {
+  color: #0a1230;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -181,6 +188,10 @@
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
+  }
+  /* Isi grid boleh menyempit; tanpa ini tabel/teks panjang mendorong halaman melebar di HP */
+  .grid > * {
+    min-width: 0;
   }
 }
 
@@ -199,6 +210,16 @@
   .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
   .scrollbar-thin::-webkit-scrollbar-thumb { background: #c3ccdc; border-radius: 3px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  /* Baris chip yang bisa digeser ke samping tanpa scrollbar terlihat */
+  .scrollbar-none { scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  /* HP: tabel di dalam wadah scroll diberi lebar minimum supaya kolom tidak gepeng; geser ke samping untuk melihat sisanya */
+  @media (max-width: 639px) {
+    .overflow-x-auto > table,
+    .overflow-auto > table {
+      min-width: 36rem;
+    }
+  }
   @media print {
     .print-hide { display: none !important; }
     .print-area { box-shadow: none !important; border: none !important; }
