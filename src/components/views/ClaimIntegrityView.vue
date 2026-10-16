@@ -98,7 +98,7 @@ function parseFlags(json: string | null) {
       <template #action>
         <div class="relative">
           <Search class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input v-model="q" placeholder="Cari nomor klaim/SEP/INA-CBG…" class="h-8 w-60 pl-8 text-xs" />
+          <Input v-model="q" placeholder="Cari nomor klaim/SEP/INA-CBG…" class="h-9 w-full pl-8 text-xs sm:w-60" />
         </div>
       </template>
       <div class="max-h-[420px] overflow-auto rounded-xl border scrollbar-thin">
@@ -180,6 +180,7 @@ function parseFlags(json: string | null) {
           <div class="flex flex-wrap gap-2">
             <Button
               class="gap-1.5 bg-brand hover:bg-brand-hover"
+              :disabled="!store.can('CREATE')" :title="store.can('CREATE') ? undefined : 'Butuh izin CREATE'"
               @click="store.openAction({
                 title: `Tinjau klaim ${detail.claim.claimNumber}`,
                 description: `Menyelesaikan ${detail.anomalies.length} sinyal pada klaim ${detail.claim.claimNumber} (${detail.claim.inacbgDesc}).`,
