@@ -2,7 +2,7 @@
 // AppShell — port dari components/medcredix/app-shell.tsx:
 // sidebar SPKD navy, topbar, breadcrumb, pencarian global (Ctrl+K), notifikasi.
 import {
-  Building, Sparkles, Menu, Search, LogOut, ChevronRight, Moon, SunMedium, Bell,
+  Building, Sparkles, Menu, Search, LogOut, ChevronRight, Moon, SunMedium, Bell, BookOpen,
 } from 'lucide-vue-next'
 import { NAV, VIEW_TITLES } from '~/utils/nav'
 import { useMedCredix, useHashRouter } from '~/stores/medcredix'
@@ -20,6 +20,9 @@ import SideNavContent from '~/components/medcredix/SideNavContent.vue'
 
 useHashRouter()
 const store = useMedCredix()
+
+// Dokumentasi API (Swagger) dibuka di tab baru
+const openApiDocs = () => window.open('/api_v1_documentation_medcredix/', '_blank', 'noopener')
 
 const mobileOpen = ref(false)
 const searchOpen = ref(false)
@@ -53,6 +56,7 @@ onBeforeUnmount(() => {
   if (bootTimer) clearInterval(bootTimer)
 })
 watch(() => store.hospitalId, loadBoot)
+watch(() => store.dataVersion, loadBoot) // badge sidebar ikut diperbarui setelah tindakan dibuat
 
 // pencarian global (debounce)
 const searchResults = ref<any[]>([])
@@ -81,7 +85,8 @@ const visibleNav = computed(() =>
 const crumbs = computed(() => {
   const view = store.view
   const group = NAV.find((g) => g.items.some((i) => i.id === view))
-  return { group: group?.label ?? '', item: VIEW_TITLES[view]?.title ?? view }
+  if (store.notFoundPath) return { group: '', item: 'Halaman tidak ditemukan' }
+  return { group: group?.label ?? '', item: VIEW_TITLES[view]?.title ?? 'Halaman tidak ditemukan' }
 })
 function badge(key?: string): number {
   if (!key || !boot.value) return 0
@@ -102,9 +107,13 @@ const userInitials = computed(() => {
     name.split(' ').map((w) => w[0]).slice(0, 2).join('').replace(/[^A-Za-z]/g, '').slice(0, 2) || 'U'
   )
 })
+// Klik notifikasi: buka halaman sesuai isi notifikasi (link dari backend, mis. #/early-warnings).
+function notificationView(link: string | null | undefined) {
+  return link ? link.replace('#/', '').split('/')[0] : null
+}
 function openNotificationLink(link: string) {
-  const view = link.replace('#/', '').split('/')[0]
-  store.navigate(view)
+  const view = notificationView(link)
+  if (view) store.navigate(view)
 }
 </script>
 
@@ -112,12 +121,12 @@ function openNotificationLink(link: string) {
   <div class="flex min-h-screen bg-background">
     <!-- Sidebar desktop -->
     <aside class="fixed inset-y-0 left-0 z-40 hidden w-60 bg-sidebar lg:block">
-      <SideNavContent :nav="visibleNav" :view="store.view" :user="store.user" :badges="boot?.badges" @navigate="store.navigate" />
+      <SideNavContent :nav="visibleNav" :view="store.notFoundPath ? '' : store.view" :user="store.user" :badges="boot?.badges" @navigate="store.navigate" />
     </aside>
 
     <!-- Sidebar mobile -->
     <Sheet :open="mobileOpen" side="left" @update:open="mobileOpen = $event">
-      <SideNavContent :nav="visibleNav" :view="store.view" :user="store.user" :badges="boot?.badges" @navigate="(v) => { store.navigate(v); mobileOpen = false }" />
+      <SideNavContent :nav="visibleNav" :view="store.notFoundPath ? '' : store.view" :user="store.user" :badges="boot?.badges" @navigate="(v) => { store.navigate(v); mobileOpen = false }" />
     </Sheet>
 
     <div class="flex min-w-0 flex-1 flex-col lg:pl-60">
@@ -144,9 +153,12 @@ function openNotificationLink(link: string) {
               <Building class="h-3.5 w-3.5" /> Ganti RS
             </Button>
           </template>
-          <DropdownItem v-for="h in boot.hospitals" :key="h.id" :class="store.hospitalId === h.id ? 'bg-brand-light font-semibold' : ''" @click="store.setHospital(h.id)">
-            {{ h.name }} <span class="text-[10px] text-muted-foreground">{{ h.city }}</span>
-          </DropdownItem>
+          <div class="min-w-72">
+            <DropdownItem v-for="h in boot.hospitals" :key="h.id" :class="store.hospitalId === h.id ? 'bg-brand-light font-semibold' : ''" @click="store.setHospital(h.id)">
+              <span class="flex-1 whitespace-nowrap text-left">{{ h.name }}</span>
+              <span v-if="h.city" class="shrink-0 whitespace-nowrap pl-4 text-[10px] font-normal text-muted-foreground">{{ h.city }}</span>
+            </DropdownItem>
+          </div>
         </Dropdown>
 
         <Button variant="outline" size="sm" class="h-8 gap-2 text-xs" @click="searchOpen = true">
@@ -171,17 +183,19 @@ function openNotificationLink(link: string) {
           </template>
           <DropdownLabel class="text-xs">Notifikasi ({{ boot?.notifications?.length ?? 0 }})</DropdownLabel>
           <DropdownSeparator />
-          <div class="max-h-80 w-80 overflow-y-auto scrollbar-thin">
+          <div class="max-h-[70vh] w-full overflow-y-auto scrollbar-thin sm:max-h-80 sm:w-80">
             <button
               v-for="n in boot?.notifications ?? []" :key="n.id"
               class="flex w-full flex-col gap-1 border-b border-border/60 px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-muted/50"
+              data-dropdown-close
               @click="n.link && openNotificationLink(n.link)"
             >
               <span class="flex items-center gap-2">
                 <span :class="['h-1.5 w-1.5 rounded-full', n.severity === 'Tinggi' ? 'bg-danger' : n.severity === 'Sedang' ? 'bg-warning' : 'bg-info']" />
                 <span class="text-xs font-semibold leading-snug">{{ n.title }}</span>
               </span>
-              <span class="line-clamp-2 pl-3.5 text-[11px] leading-snug text-muted-foreground">{{ n.body }}</span>
+              <span v-if="n.body" class="line-clamp-2 pl-3.5 text-[11px] leading-snug text-muted-foreground">{{ n.body }}</span>
+              <span v-if="n.link" class="pl-3.5 text-[10px] font-medium text-brand-2">Buka {{ VIEW_TITLES[notificationView(n.link) ?? '']?.title ?? 'halaman' }} →</span>
             </button>
             <div v-if="!(boot?.notifications?.length)" class="px-3 py-4 text-center text-xs text-muted-foreground">Tidak ada notifikasi.</div>
           </div>
@@ -201,6 +215,7 @@ function openNotificationLink(link: string) {
             <Badge class="mt-1.5 text-[10px] font-semibold">{{ store.user?.roleLabel }}</Badge>
           </DropdownLabel>
           <DropdownSeparator />
+          <DropdownItem @click="openApiDocs"><BookOpen class="h-4 w-4" /> Dokumentasi API</DropdownItem>
           <DropdownItem danger @click="store.logout()"><LogOut class="h-4 w-4" /> Keluar</DropdownItem>
         </Dropdown>
       </header>
@@ -209,8 +224,10 @@ function openNotificationLink(link: string) {
       <div class="flex items-center gap-1.5 border-b border-border/60 bg-muted/30 px-4 py-2 text-[11px] text-muted-foreground sm:px-6">
         <button class="hover:text-brand-2" @click="store.navigate('dashboard')">MedCredix</button>
         <ChevronRight class="h-3 w-3" />
-        <span>{{ crumbs.group }}</span>
-        <ChevronRight class="h-3 w-3" />
+        <template v-if="crumbs.group">
+          <span>{{ crumbs.group }}</span>
+          <ChevronRight class="h-3 w-3" />
+        </template>
         <span class="font-semibold text-foreground">{{ crumbs.item }}</span>
         <span class="ml-auto hidden text-[10px] md:block">
           Skor Kredensial BPJS:
