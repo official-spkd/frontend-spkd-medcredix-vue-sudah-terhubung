@@ -4,6 +4,7 @@
 import { X } from 'lucide-vue-next'
 import { onBeforeUnmount, watch } from 'vue'
 import { lockScroll, unlockScroll } from '~/composables/useScrollLock'
+import { openOverlay } from '~/composables/useOverlayStack'
 
 const props = withDefaults(defineProps<{ open: boolean; size?: 'sm' | 'md' | 'lg' | 'xl'; closable?: boolean }>(), {
   size: 'md',
@@ -21,12 +22,16 @@ function onKey(e: KeyboardEvent) {
 }
 
 let locked = false
+let release: (() => void) | null = null
 function sync(v: boolean) {
   if (typeof document === 'undefined') return
   document.removeEventListener('keydown', onKey)
   if (v) document.addEventListener('keydown', onKey)
   if (v && !locked) { lockScroll(); locked = true }
   if (!v && locked) { unlockScroll(); locked = false }
+  // Pop-up baru menutup pop-up lama yang masih terbuka.
+  if (v && !release) release = openOverlay(() => emit('update:open', false))
+  if (!v && release) { release(); release = null }
 }
 watch(() => props.open, sync, { immediate: true })
 onBeforeUnmount(() => sync(false))
