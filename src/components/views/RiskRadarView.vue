@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // RiskRadarView — port dari views-risk.tsx.
-import { Radar, CheckCircle2, UserPlus, PlusCircle, Fingerprint, Filter } from 'lucide-vue-next'
+import { Radar, CheckCircle2, PlusCircle, Fingerprint, Filter, Info } from 'lucide-vue-next'
 import { RISK_CATEGORIES, fmtDate } from '~/utils/format'
 import { useMedCredix } from '~/stores/medcredix'
 import { toast } from '~/composables/useToast'
@@ -25,6 +25,15 @@ const data = ref<{ risks: any[]; evidence: any[] } | null>(null)
 const loading = ref(true)
 
 const LEVELS = ['Tinggi', 'Sedang', 'Rendah']
+
+// Tombol mengikuti izin peran (internal/auth/rbac.go + risk_controller.go): Tandai Ditinjau butuh ASSIGN,
+// Buat Tindakan butuh CREATE. Tanpa izin, tombol tetap tampil tapi nonaktif.
+const canAssign = computed(() => store.can('ASSIGN'))
+const canCreate = computed(() => store.can('CREATE'))
+const missing = computed(() => [
+  !canAssign.value && 'Tandai Ditinjau (ASSIGN)',
+  !canCreate.value && 'Buat Tindakan (CREATE)',
+].filter(Boolean).join(', '))
 
 async function load() {
   loading.value = true
@@ -51,9 +60,17 @@ async function patchRisk(r: any, body: any, msg: string) {
   }
 }
 
+// Kartu ringkasan menghitung risiko AKTIF saja (sama dengan Dashboard dan badge sidebar).
+// Risiko yang sudah Teratasi / Selesai / Ditutup dihitung terpisah sebagai "selesai".
+const CLOSED = ['Teratasi', 'Selesai', 'Ditutup']
 const summary = computed(() => {
   const s: Record<string, number> = { Tinggi: 0, Sedang: 0, Rendah: 0 }
-  for (const r of data.value?.risks ?? []) s[r.level] = (s[r.level] ?? 0) + 1
+  for (const r of data.value?.risks ?? []) if (!CLOSED.includes(r.status)) s[r.level] = (s[r.level] ?? 0) + 1
+  return s
+})
+const closedSummary = computed(() => {
+  const s: Record<string, number> = { Tinggi: 0, Sedang: 0, Rendah: 0 }
+  for (const r of data.value?.risks ?? []) if (CLOSED.includes(r.status)) s[r.level] = (s[r.level] ?? 0) + 1
   return s
 })
 </script>
@@ -64,22 +81,28 @@ const summary = computed(() => {
       <template #actions><DemoBadge /></template>
     </PageHeader>
 
+    <div v-if="missing" class="flex items-start gap-2 rounded-xl border bg-muted/40 px-3.5 py-2.5 text-[11px] text-muted-foreground">
+      <Info class="mt-px h-3.5 w-3.5 shrink-0" />
+      <span>Peran Anda tidak memiliki izin untuk: {{ missing }}. Tombol tersebut dinonaktifkan.</span>
+    </div>
+
     <div class="grid grid-cols-3 gap-3">
       <div
         v-for="lv in LEVELS" :key="lv"
         :class="['rounded-xl border p-4', lv === 'Tinggi' ? 'border-danger/30 bg-danger-light/40' : lv === 'Sedang' ? 'border-warning/30 bg-warning-light/40' : 'border-info/30 bg-info-light/40']"
       >
-        <div class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Risiko {{ lv }}</div>
+        <div class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Risiko {{ lv }} aktif</div>
         <div :class="['mt-1 font-display text-2xl font-bold', lv === 'Tinggi' ? 'text-danger' : lv === 'Sedang' ? 'text-warning' : 'text-info']">{{ summary[lv] ?? 0 }}</div>
+        <div v-if="closedSummary[lv]" class="mt-0.5 text-[10px] text-muted-foreground">+{{ closedSummary[lv] }} sudah selesai</div>
       </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3">
-      <Filter class="h-4 w-4 text-muted-foreground" />
-      <div class="w-36"><Select v-model="level"><SelectOption value="all">Semua Level</SelectOption><SelectOption v-for="l in LEVELS" :key="l" :value="l">{{ l }}</SelectOption></Select></div>
-      <div class="w-44"><Select v-model="category"><SelectOption value="all">Semua Kategori</SelectOption><SelectOption v-for="c in RISK_CATEGORIES" :key="c" :value="c">{{ c }}</SelectOption></Select></div>
-      <div class="w-36"><Select v-model="status"><SelectOption value="all">Semua Status</SelectOption><SelectOption v-for="s in ['Baru', 'Terbuka', 'Ditinjau', 'Dalam Pengerjaan', 'Terkelola', 'Teratasi', 'Selesai', 'Ditutup']" :key="s" :value="s">{{ s }}</SelectOption></Select></div>
-      <span class="ml-auto text-xs text-muted-foreground">{{ data?.risks?.length ?? 0 }} risiko</span>
+    <div class="grid grid-cols-2 gap-2 rounded-xl border bg-card p-3 sm:flex sm:flex-wrap sm:items-center">
+      <Filter class="hidden h-4 w-4 text-muted-foreground sm:block" />
+      <div class="w-full sm:w-40"><Select v-model="level"><SelectOption value="all">Semua Level</SelectOption><SelectOption v-for="l in LEVELS" :key="l" :value="l">{{ l }}</SelectOption></Select></div>
+      <div class="w-full sm:w-48"><Select v-model="category"><SelectOption value="all">Semua Kategori</SelectOption><SelectOption v-for="c in RISK_CATEGORIES" :key="c" :value="c">{{ c }}</SelectOption></Select></div>
+      <div class="col-span-2 w-full sm:col-span-1 sm:w-44"><Select v-model="status"><SelectOption value="all">Semua Status</SelectOption><SelectOption v-for="s in ['Baru', 'Terbuka', 'Ditinjau', 'Dalam Pengerjaan', 'Terkelola', 'Teratasi', 'Selesai', 'Ditutup']" :key="s" :value="s">{{ s }}</SelectOption></Select></div>
+      <span class="col-span-2 text-right text-xs text-muted-foreground sm:ml-auto">{{ data?.risks?.length ?? 0 }} risiko</span>
     </div>
 
     <div v-if="loading" class="py-16 text-center text-sm text-muted-foreground">Memuat risiko…</div>
@@ -110,11 +133,15 @@ const summary = computed(() => {
         <div class="mt-2.5 flex flex-wrap gap-1.5">
           <Button
             size="sm" variant="outline" class="h-7 gap-1 text-[11px]"
+            :disabled="!canCreate" :title="canCreate ? undefined : 'Butuh izin CREATE'"
             @click="store.openAction({ title: r.recommendedAction.split(';')[0] || `Tindak lanjuti ${r.title}`, description: `Dari risiko ${r.code}: ${r.description}`, sourceType: 'Risiko', sourceRef: r.code, priority: r.level, suggestedOwner: r.suggestedOwner.split(' (')[0] })"
           >
             <PlusCircle class="h-3 w-3" /> Buat Tindakan
           </Button>
-          <Button size="sm" variant="ghost" class="h-7 gap-1 text-[11px]" @click="patchRisk(r, { action: 'ack', status: 'Ditinjau' }, `${r.code} ditandai ditinjau`)">
+          <Button
+            size="sm" variant="ghost" class="h-7 gap-1 text-[11px]"
+            :disabled="!canAssign" :title="canAssign ? undefined : 'Butuh izin ASSIGN'"
+            @click="patchRisk(r, { action: 'ack', status: 'Ditinjau' }, `${r.code} ditandai ditinjau`)">
             <CheckCircle2 class="h-3 w-3" /> Tandai Ditinjau
           </Button>
         </div>
@@ -152,6 +179,7 @@ const summary = computed(() => {
           <div class="flex flex-wrap gap-2">
             <Button
               class="gap-1.5 bg-brand hover:bg-brand-hover"
+              :disabled="!canCreate" :title="canCreate ? undefined : 'Butuh izin CREATE'"
               @click="store.openAction({ title: selected.recommendedAction.split(';')[0], description: `Dari risiko ${selected.code}: ${selected.description}`, sourceType: 'Risiko', sourceRef: selected.code, priority: selected.level, suggestedOwner: selected.suggestedOwner.split(' (')[0] }); selected = null"
             >
               <PlusCircle class="h-4 w-4" /> Buat Tindakan
