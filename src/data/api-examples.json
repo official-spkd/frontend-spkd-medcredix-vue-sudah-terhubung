@@ -1,0 +1,1690 @@
+{
+  "POST /api/auth": {
+    "data": {
+      "expiresAt": "2026-10-13T21:50:06.315061026Z",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1X2FkbWluX25zIn0.xxxxx",
+      "user": {
+        "email": "admin@nusantarasehat.co.id",
+        "hospitalId": "h_nusantara",
+        "id": "u_admin_ns",
+        "name": "dr. Aditya Nugraha, MARS",
+        "permissions": [
+          "VIEW",
+          "CREATE"
+        ],
+        "role": "admin_rs",
+        "roleLabel": "Admin RS",
+        "title": null
+      }
+    },
+    "ok": true
+  },
+  "GET /api/health": {
+    "data": {
+      "status": "up"
+    },
+    "ok": true
+  },
+  "GET /api/bootstrap": {
+    "data": {
+      "alertRules": [
+        {
+          "active": false,
+          "channels": "in-app",
+          "condition": "< 80",
+          "domain": "Clinical Pathway",
+          "hospitalId": "h_nusantara",
+          "id": "ar_ns_04",
+          "lastTriggeredAt": null,
+          "metric": "avg_adherence",
+          "name": "Adherence pathway rendah",
+          "severity": "Sedang",
+          "triggeredCount": 0
+        },
+        {
+          "active": false,
+          "channels": "in-app,email",
+          "condition": "<= 30",
+          "domain": "Kredensial",
+          "hospitalId": "h_nusantara",
+          "id": "ar_ns_01",
+          "lastTriggeredAt": null,
+          "metric": "expiry_days",
+          "name": "Kredensial <= 30 hari",
+          "severity": "Tinggi",
+          "triggeredCount": 0
+        }
+      ],
+      "badges": {
+        "actions": 13,
+        "risks": 5,
+        "warnings": 0
+      },
+      "hospital": {
+        "bedActive": 196,
+        "bedLicensed": 222,
+        "bedNotOperating": 26,
+        "bpjsFacilityCode": "0123",
+        "city": "Kota",
+        "class": "B",
+        "code": "RSNS",
+        "createdAt": "2026-10-13T03:49:21.120379Z",
+        "id": "h_nusantara",
+        "name": "RS Uji",
+        "notOperatingNote": null,
+        "onboarding": false
+      },
+      "hospitals": null,
+      "intel": {
+        "bcds": {
+          "final": 75.2,
+          "lulus": false,
+          "multiplier": 1,
+          "prereqOk": false,
+          "raw": 75.2,
+          "stage": 0,
+          "trust": 92.3
+        },
+        "ccs": 69.4,
+        "cpcs": 76.3,
+        "domains": [
+          "…",
+          "…"
+        ],
+        "healthScore": 74.4,
+        "healthStatus": "fair",
+        "kelompok": {
+          "A": 90.2,
+          "B": 65.9,
+          "C": 76.1,
+          "D": 62.7
+        },
+        "prereq": [
+          "…",
+          "…"
+        ],
+        "trend": [
+          "…",
+          "…"
+        ],
+        "trust": {
+          "anomalyFlags": 1,
+          "factors": [
+            "…"
+          ],
+          "multiplier": 1,
+          "score": 92.3,
+          "underReview": false
+        },
+        "ur": {
+          "alos": 5.3,
+          "alosScore": 94,
+          "bor": 81,
+          "borScore": 100,
+          "readmScore": 100,
+          "readmission": 4.9,
+          "score": 98,
+          "targetAlos": 5,
+          "targetBorMax": 85,
+          "targetBorMin": 60,
+          "targetReadmission": 5
+        }
+      },
+      "notifications": [
+        {
+          "body": "",
+          "channel": "in-app",
+          "createdAt": null,
+          "hospitalId": "h_nusantara",
+          "id": "ntf_ns_03",
+          "link": null,
+          "read": false,
+          "severity": "Tinggi",
+          "title": "Akreditasi KARS berakhir dalam 115 hari",
+          "userId": "u_admin_ns"
+        },
+        {
+          "body": "",
+          "channel": "in-app",
+          "createdAt": null,
+          "hospitalId": "h_nusantara",
+          "id": "ntf_ns_02",
+          "link": null,
+          "read": false,
+          "severity": "Tinggi",
+          "title": "Sinyal klaim naik 18%",
+          "userId": "u_admin_ns"
+        }
+      ],
+      "user": {
+        "email": "admin@nusantarasehat.co.id",
+        "hospitalId": "h_nusantara",
+        "id": "u_admin_ns",
+        "name": "dr. Aditya Nugraha, MARS",
+        "permissions": [
+          "VIEW",
+          "CREATE"
+        ],
+        "role": "admin_rs",
+        "roleLabel": "Admin RS",
+        "title": null
+      },
+      "users": [
+        {
+          "id": "u_it_ns",
+          "name": "Andika Pratama, S.Kom",
+          "role": "it_simrs"
+        },
+        {
+          "id": "u_view_ns",
+          "name": "Dewi Anggraini, S.E",
+          "role": "viewer"
+        }
+      ]
+    },
+    "ok": true
+  },
+  "GET /api/dashboard": {
+    "data": {
+      "actions": [
+        {
+          "code": "ACT-004",
+          "createdAt": "2026-09-06T08:30:00Z",
+          "description": "Perpanjang SIP kedaluwarsa dan <=30 hari (data demo)",
+          "dueDate": "2026-10-13T00:00:00Z",
+          "expectedOutcome": "Skor domain terkait membaik",
+          "hospitalId": "h_nusantara",
+          "id": "act_ns_004",
+          "owner": "Ratna Puspitasari, S.KM",
+          "ownerRole": "",
+          "priority": "Tinggi",
+          "progressNote": null,
+          "resolutionNote": null
+        },
+        {
+          "code": "ACT-001",
+          "createdAt": "2026-09-03T08:30:00Z",
+          "description": "Perpanjang 13 kredensial mendekati kedaluwarsa (data demo)",
+          "dueDate": "2026-10-23T00:00:00Z",
+          "expectedOutcome": "Skor domain terkait membaik",
+          "hospitalId": "h_nusantara",
+          "id": "act_ns_001",
+          "owner": "Ratna Puspitasari, S.KM",
+          "ownerRole": "",
+          "priority": "Tinggi",
+          "progressNote": null,
+          "resolutionNote": null
+        }
+      ],
+      "evidence": [
+        {
+          "demoData": false,
+          "fhirResource": null,
+          "hospitalId": "h_nusantara",
+          "id": "evd_ns_30",
+          "lastSyncAt": null,
+          "metric": "Pemetaan pasal",
+          "recordCount": 2,
+          "refId": "reg_04",
+          "refType": "Regulasi",
+          "sourceSystem": "Registri Regulasi",
+          "timestamp": null,
+          "title": "Pemetaan pasal"
+        },
+        {
+          "demoData": false,
+          "fhirResource": null,
+          "hospitalId": "h_nusantara",
+          "id": "evd_ns_29",
+          "lastSyncAt": null,
+          "metric": "Pemetaan pasal",
+          "recordCount": 2,
+          "refId": "reg_03",
+          "refType": "Regulasi",
+          "sourceSystem": "Registri Regulasi",
+          "timestamp": null,
+          "title": "Pemetaan pasal"
+        }
+      ],
+      "intel": {
+        "bcds": {
+          "final": 75.2,
+          "lulus": false,
+          "multiplier": 1,
+          "prereqOk": false,
+          "raw": 75.2,
+          "stage": 0,
+          "trust": 92.3
+        },
+        "ccs": {
+          "flaggedClaims": 26,
+          "grade": "FAIR",
+          "score": 69.4,
+          "subs": [
+            "…"
+          ],
+          "totalClaims": 42
+        },
+        "computedAt": "2026-10-13T09:50:06.331072118Z",
+        "cpcs": {
+          "adherence": 80.7,
+          "coverage": 80,
+          "documentation": 63.6,
+          "score": 76.3
+        },
+        "credentialing": {
+          "completeness": 85.7,
+          "expired": 3,
+          "licenseActive": 85.7,
+          "pipelineHealth": 91.5,
+          "within30": 5,
+          "within90": 6
+        },
+        "dataAt": "2026-10-13T09:50:06.331072118Z",
+        "domains": [
+          "…",
+          "…"
+        ],
+        "formulaVersion": "medcredix-scorer/1.0",
+        "healthScore": 74.4,
+        "healthStatus": "fair",
+        "hospital": {
+          "city": "Kota",
+          "class": "B",
+          "id": "h_nusantara",
+          "name": "RS Uji",
+          "province": "Prov"
+        },
+        "kelompok": {
+          "A": 90.2,
+          "B": 65.9,
+          "C": 76.1,
+          "D": 62.7
+        }
+      },
+      "pathwayWorst": [
+        {
+          "avgAdherence": 67,
+          "costRatio": null,
+          "deviationCount": 0,
+          "diagnosis": "Dengue Haemorrhagic Fever",
+          "documentedDeviation": 100,
+          "episodeCount": 0,
+          "hospitalId": "h_nusantara",
+          "icd10": "A91",
+          "id": "cp_ns_01",
+          "labAdherence": null,
+          "losAdherence": null,
+          "medicationAdherence": null
+        },
+        {
+          "avgAdherence": 71,
+          "costRatio": null,
+          "deviationCount": 0,
+          "diagnosis": "Stroke Iskemik",
+          "documentedDeviation": 100,
+          "episodeCount": 0,
+          "hospitalId": "h_nusantara",
+          "icd10": "I63.9",
+          "id": "cp_ns_03",
+          "labAdherence": null,
+          "losAdherence": null,
+          "medicationAdherence": null
+        }
+      ],
+      "riskSummary": {
+        "rendah": 0,
+        "sedang": 3,
+        "tinggi": 2
+      },
+      "risks": [
+        {
+          "affectedRecords": "[]",
+          "businessImpact": "Dapat menurunkan skor BDCS dan menghambat kelulusan kredensial BPJS",
+          "category": "Kredensial",
+          "code": "RSK-007",
+          "deadline": "2026-10-13T00:00:00Z",
+          "description": "1 SIP kedaluwarsa dan 3 SIP berakhir <=30 hari (data demo)",
+          "detectedAt": null,
+          "domain": "Credentialing Readiness",
+          "evidenceJson": "[]",
+          "hospitalId": "h_nusantara",
+          "id": "rsk_ns_007",
+          "level": "Tinggi"
+        },
+        {
+          "affectedRecords": "[]",
+          "businessImpact": "Dapat menurunkan skor BDCS dan menghambat kelulusan kredensial BPJS",
+          "category": "Regulasi",
+          "code": "RSK-008",
+          "deadline": "2027-01-01T00:00:00Z",
+          "description": "Akreditasi KARS berakhir dalam 115 hari (data demo)",
+          "detectedAt": null,
+          "domain": "Regulasi",
+          "evidenceJson": "[]",
+          "hospitalId": "h_nusantara",
+          "id": "rsk_ns_008",
+          "level": "Tinggi"
+        }
+      ],
+      "timeline": [
+        {
+          "delta": null,
+          "label": "Health 80.9 · BDCS 82.4 · Trust 92.3",
+          "period": "2026-07",
+          "type": "Skor"
+        },
+        {
+          "delta": null,
+          "label": "Health 82.6 · BDCS 84.7 · Trust 92.3",
+          "period": "2026-08",
+          "type": "Skor"
+        }
+      ],
+      "topActions": [
+        {
+          "code": "ACT-004",
+          "createdAt": "2026-09-06T08:30:00Z",
+          "description": "Perpanjang SIP kedaluwarsa dan <=30 hari (data demo)",
+          "dueDate": "2026-10-13T00:00:00Z",
+          "expectedOutcome": "Skor domain terkait membaik",
+          "hospitalId": "h_nusantara",
+          "id": "act_ns_004",
+          "owner": "Ratna Puspitasari, S.KM",
+          "ownerRole": "",
+          "priority": "Tinggi",
+          "progressNote": null,
+          "resolutionNote": null
+        },
+        {
+          "code": "ACT-001",
+          "createdAt": "2026-09-03T08:30:00Z",
+          "description": "Perpanjang 13 kredensial mendekati kedaluwarsa (data demo)",
+          "dueDate": "2026-10-23T00:00:00Z",
+          "expectedOutcome": "Skor domain terkait membaik",
+          "hospitalId": "h_nusantara",
+          "id": "act_ns_001",
+          "owner": "Ratna Puspitasari, S.KM",
+          "ownerRole": "",
+          "priority": "Tinggi",
+          "progressNote": null,
+          "resolutionNote": null
+        }
+      ],
+      "warnings": [
+        {
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "assignedTo": "Budi",
+          "code": "EW-002",
+          "description": "Sinyal klaim naik +18%",
+          "detectedAt": null,
+          "domain": null,
+          "dueDate": "2026-11-30T00:00:00Z",
+          "hospitalId": "h_nusantara",
+          "id": "ew_ns_002",
+          "severity": "Tinggi",
+          "status": "Ditugaskan"
+        },
+        {
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "assignedTo": "Andika Pratama, S.Kom",
+          "code": "EW-004",
+          "description": "Sinkronisasi SIMRS terlambat",
+          "detectedAt": null,
+          "domain": null,
+          "dueDate": "2026-10-10T00:00:00Z",
+          "hospitalId": "h_nusantara",
+          "id": "ew_ns_004",
+          "severity": "Sedang",
+          "status": "Ditugaskan"
+        }
+      ]
+    },
+    "ok": true
+  },
+  "GET /api/scores": {
+    "data": {
+      "actions": [
+        {
+          "code": "ACT-005",
+          "createdAt": "2026-09-07T08:30:00Z",
+          "description": "Bentuk tim re-akreditasi KARS (data demo)",
+          "dueDate": "2026-11-12T00:00:00Z",
+          "expectedOutcome": "Skor domain terkait membaik",
+          "hospitalId": "h_nusantara",
+          "id": "act_ns_005",
+          "owner": "Belum ditugaskan",
+          "ownerRole": "",
+          "priority": "Tinggi",
+          "progressNote": null,
+          "resolutionNote": null
+        },
+        {
+          "code": "ACT-008",
+          "createdAt": "2026-09-10T08:30:00Z",
+          "description": "Merger rekaman pasien duplikat (data demo)",
+          "dueDate": "2026-11-22T00:00:00Z",
+          "expectedOutcome": "Skor domain terkait membaik",
+          "hospitalId": "h_nusantara",
+          "id": "act_ns_008",
+          "owner": "Belum ditugaskan",
+          "ownerRole": "",
+          "priority": "Sedang",
+          "progressNote": null,
+          "resolutionNote": null
+        }
+      ],
+      "bcds": {
+        "final": 75.2,
+        "lulus": false,
+        "multiplier": 1,
+        "prereqOk": false,
+        "raw": 75.2,
+        "stage": 0,
+        "trust": 92.3
+      },
+      "domains": [
+        {
+          "contribution": 10.7,
+          "key": "workforce",
+          "label": "Clinical Workforce",
+          "score": 89.5,
+          "weight": 0.12
+        },
+        {
+          "contribution": 10.8,
+          "key": "credentialing",
+          "label": "Credentialing Readiness",
+          "score": 77,
+          "weight": 0.14
+        }
+      ],
+      "evidence": [
+        {
+          "demoData": false,
+          "fhirResource": "Encounter",
+          "hospitalId": "h_nusantara",
+          "id": "evd_ns_01",
+          "lastSyncAt": null,
+          "metric": "Hospital Health Score",
+          "recordCount": 100,
+          "refId": "skor_1",
+          "refType": "Skor",
+          "sourceSystem": "SIMRS Utama",
+          "timestamp": null,
+          "title": "Hospital Health Score"
+        },
+        {
+          "demoData": false,
+          "fhirResource": "Encounter",
+          "hospitalId": "h_nusantara",
+          "id": "evd_ns_02",
+          "lastSyncAt": null,
+          "metric": "BDCS",
+          "recordCount": 120,
+          "refId": "skor_2",
+          "refType": "Skor",
+          "sourceSystem": "SIMRS Utama",
+          "timestamp": null,
+          "title": "BDCS"
+        }
+      ],
+      "formula": "Hospital Health Score = Σ(skor domain × bobot domain). Bobot: Claim Integrity 16%, Credentialing ...",
+      "formulaVersion": "medcredix-scorer/1.0",
+      "healthScore": 74.4,
+      "kelompok": {
+        "A": 90.2,
+        "B": 65.9,
+        "C": 76.1,
+        "D": 62.7
+      },
+      "kind": "health",
+      "recommendations": [
+        {
+          "priority": "Tinggi",
+          "suggestedOwner": "IT / SIMRS",
+          "title": "Perbaiki domain Digital Maturity (skor 45)"
+        },
+        {
+          "priority": "Sedang",
+          "suggestedOwner": "Komite Mutu & Keselamatan Pasien",
+          "title": "Tingkatkan closed-loop medikasi hingga ≥ 85%"
+        }
+      ],
+      "risks": [
+        {
+          "affectedRecords": "[]",
+          "businessImpact": "Berpotensi menurunkan skor domain terkait",
+          "category": "Medikasi",
+          "code": "RSK-005",
+          "deadline": "2026-12-02T00:00:00Z",
+          "description": "Closed-loop medikasi belum merata (data demo)",
+          "detectedAt": null,
+          "domain": "Medication Management",
+          "evidenceJson": "[]",
+          "hospitalId": "h_nusantara",
+          "id": "rsk_ns_005",
+          "level": "Sedang"
+        },
+        {
+          "affectedRecords": "[]",
+          "businessImpact": "Berpotensi menurunkan skor domain terkait",
+          "category": "Interoperabilitas",
+          "code": "RSK-006",
+          "deadline": "2026-11-17T00:00:00Z",
+          "description": "Latensi API FHIR mendekati ambang (data demo)",
+          "detectedAt": null,
+          "domain": "Interoperability",
+          "evidenceJson": "[]",
+          "hospitalId": "h_nusantara",
+          "id": "rsk_ns_006",
+          "level": "Sedang"
+        }
+      ],
+      "stageTable": [
+        {
+          "min": 90,
+          "stage": 7
+        },
+        {
+          "min": 80,
+          "stage": 6
+        }
+      ]
+    },
+    "ok": true
+  },
+  "GET /api/admin": {
+    "error": "Panel Admin hanya untuk Super Admin & Auditor BPJS.",
+    "ok": false
+  },
+  "GET /api/risks": {
+    "data": {
+      "evidence": [
+        {
+          "demoData": false,
+          "fhirResource": "Practitioner",
+          "hospitalId": "h_nusantara",
+          "id": "evd_ns_09",
+          "lastSyncAt": null,
+          "metric": "Rekaman terdampak",
+          "recordCount": 14,
+          "refId": "rsk_ns_001",
+          "refType": "Risiko",
+          "sourceSystem": "SIMRS Utama",
+          "timestamp": null,
+          "title": "Rekaman terdampak",
+          "unit": null,
+          "validationStatus": "Valid",
+          "value": "terverifikasi"
+        },
+        {
+          "demoData": false,
+          "fhirResource": "Practitioner",
+          "hospitalId": "h_nusantara",
+          "id": "evd_ns_10",
+          "lastSyncAt": null,
+          "metric": "Rekaman terdampak",
+          "recordCount": 14,
+          "refId": "rsk_ns_001",
+          "refType": "Risiko",
+          "sourceSystem": "SIMRS Utama",
+          "timestamp": null,
+          "title": "Rekaman terdampak",
+          "unit": null,
+          "validationStatus": "Valid",
+          "value": "terverifikasi"
+        }
+      ],
+      "risks": [
+        {
+          "affectedRecords": "[]",
+          "businessImpact": "Dapat menurunkan skor BDCS dan menghambat kelulusan kredensial BPJS",
+          "category": "Kredensial",
+          "code": "RSK-001",
+          "deadline": "2026-12-01T00:00:00Z",
+          "description": "13 kredensial mendekati kedaluwarsa (data demo)",
+          "detectedAt": null,
+          "domain": "Credentialing Readiness",
+          "evidenceJson": "[]",
+          "hospitalId": "h_nusantara",
+          "id": "rsk_ns_001",
+          "level": "Tinggi",
+          "recommendedAction": "Proses perpanjangan STR/SIP sebelum jatuh tempo",
+          "status": "Ditutup",
+          "suggestedOwner": "Tim Mutu",
+          "title": "13 kredensial mendekati kedaluwarsa"
+        },
+        {
+          "affectedRecords": "[]",
+          "businessImpact": "Berpotensi menurunkan skor domain terkait",
+          "category": "Klaim",
+          "code": "RSK-002",
+          "deadline": "2026-12-01T00:00:00Z",
+          "description": "Sinyal anomali klaim meningkat 18% (data demo)",
+          "detectedAt": null,
+          "domain": "Claim Integrity",
+          "evidenceJson": "[]",
+          "hospitalId": "h_nusantara",
+          "id": "rsk_ns_002",
+          "level": "Sedang",
+          "recommendedAction": "Tinjau klaim bersinyal dan lengkapi dokumen pendukung",
+          "status": "Ditutup",
+          "suggestedOwner": "Tim Mutu",
+          "title": "Sinyal anomali klaim meningkat 18%"
+        }
+      ],
+      "total": 12
+    },
+    "ok": true
+  },
+  "GET /api/warnings": {
+    "data": {
+      "rules": [
+        {
+          "active": false,
+          "channels": "in-app",
+          "condition": "< 80",
+          "domain": "Clinical Pathway",
+          "hospitalId": "h_nusantara",
+          "id": "ar_ns_04",
+          "lastTriggeredAt": null,
+          "metric": "avg_adherence",
+          "name": "Adherence pathway rendah",
+          "severity": "Sedang",
+          "triggeredCount": 0
+        },
+        {
+          "active": false,
+          "channels": "in-app,email",
+          "condition": "<= 30",
+          "domain": "Kredensial",
+          "hospitalId": "h_nusantara",
+          "id": "ar_ns_01",
+          "lastTriggeredAt": null,
+          "metric": "expiry_days",
+          "name": "Kredensial <= 30 hari",
+          "severity": "Tinggi",
+          "triggeredCount": 0
+        }
+      ],
+      "total": 10,
+      "warnings": [
+        {
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "assignedTo": null,
+          "code": "EW-005",
+          "description": "Kepatuhan pathway di bawah ambang",
+          "detectedAt": null,
+          "domain": null,
+          "dueDate": null,
+          "hospitalId": "h_nusantara",
+          "id": "ew_ns_005",
+          "severity": "Sedang",
+          "status": "Diketahui",
+          "thresholdRule": "adherence < 80%",
+          "title": "Kepatuhan pathway di bawah ambang",
+          "triggerValue": "76,3%"
+        },
+        {
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "assignedTo": null,
+          "code": "EW-007",
+          "description": "Prasyarat P4 menunggu verifikasi",
+          "detectedAt": null,
+          "domain": null,
+          "dueDate": null,
+          "hospitalId": "h_nusantara",
+          "id": "ew_ns_007",
+          "severity": "Sedang",
+          "status": "Diketahui",
+          "thresholdRule": "status menunggu > 7 hari",
+          "title": "Prasyarat P4 menunggu verifikasi",
+          "triggerValue": "9 hari"
+        }
+      ]
+    },
+    "ok": true
+  },
+  "GET /api/actions": {
+    "data": {
+      "actions": [
+        {
+          "code": "ACT-017",
+          "createdAt": "2026-10-13T03:53:15.713006Z",
+          "description": "d",
+          "dueDate": "2026-12-20T00:00:00Z",
+          "expectedOutcome": "ok",
+          "hospitalId": "h_nusantara",
+          "id": "act_4ec4bdf7a137df01",
+          "owner": "Sari",
+          "ownerRole": "",
+          "priority": "Tinggi",
+          "progressNote": null,
+          "resolutionNote": null,
+          "resolvedAt": null,
+          "sourceRef": "rsk_ns_001",
+          "sourceType": "Risk",
+          "status": "Ditugaskan"
+        },
+        {
+          "code": "ACT-016",
+          "createdAt": "2026-09-18T08:30:00Z",
+          "description": "Evaluasi adopsi closed-loop medikasi (data demo)",
+          "dueDate": "2026-12-20T00:00:00Z",
+          "expectedOutcome": "Skor domain terkait membaik",
+          "hospitalId": "h_nusantara",
+          "id": "act_ns_016",
+          "owner": "Sari",
+          "ownerRole": "",
+          "priority": "Sedang",
+          "progressNote": null,
+          "resolutionNote": "beres",
+          "resolvedAt": "2026-10-13T03:53:15.772474Z",
+          "sourceRef": "medication",
+          "sourceType": "Skor",
+          "status": "Selesai"
+        }
+      ],
+      "stats": {
+        "high": 6,
+        "open": 13,
+        "resolved": 4,
+        "total": 17
+      }
+    },
+    "ok": true
+  },
+  "GET /api/practitioners": {
+    "data": {
+      "depts": [
+        "Kebidanan",
+        "Rawat Inap"
+      ],
+      "practitioners": [
+        {
+          "createdAt": null,
+          "department": "Kebidanan",
+          "employmentType": null,
+          "fhirId": "Practitioner/ns-25",
+          "fullName": "Bd. Umi Kalsum, S.Tr.Keb",
+          "hospitalId": "h_nusantara",
+          "id": "pns_25",
+          "joinDate": null,
+          "nikMasked": null,
+          "phone": null,
+          "profession": "Bidan",
+          "sipExpiry": "2029-03-08T00:00:00Z",
+          "sipNumber": "SIP-125/DPMPTSP/2025",
+          "specialty": null,
+          "status": "Aktif",
+          "strExpiry": "2029-01-30T00:00:00Z"
+        },
+        {
+          "createdAt": null,
+          "department": "Rawat Inap",
+          "employmentType": null,
+          "fhirId": "Practitioner/ns-24",
+          "fullName": "Ns. Indah Permatasari, S.Kep",
+          "hospitalId": "h_nusantara",
+          "id": "pns_24",
+          "joinDate": null,
+          "nikMasked": null,
+          "phone": null,
+          "profession": "Perawat",
+          "sipExpiry": "2026-09-23T00:00:00Z",
+          "sipNumber": "SIP-124/DPMPTSP/2025",
+          "specialty": null,
+          "status": "Aktif",
+          "strExpiry": "2028-11-17T00:00:00Z"
+        }
+      ],
+      "total": 28
+    },
+    "ok": true
+  },
+  "GET /api/credentials": {
+    "data": {
+      "credentials": [
+        {
+          "approvedAt": "2026-10-13T03:53:15.902521Z",
+          "approvedById": "u_komed_ns",
+          "createdAt": null,
+          "expiryDate": "2026-08-29T00:00:00Z",
+          "hospitalId": "h_nusantara",
+          "id": "c_pns05_sip",
+          "issueDate": "2023-08-30T00:00:00Z",
+          "name": "SIP — dr. Farida Hanum, Sp.N",
+          "notes": null,
+          "number": "SIP-105/DPMPTSP/2025",
+          "practitionerId": "pns_05",
+          "practitionerName": "dr. Farida Hanum, Sp.N",
+          "profession": "Dokter Spesialis",
+          "specialty": "Saraf",
+          "status": "Kedaluwarsa",
+          "type": "SIP"
+        },
+        {
+          "approvedAt": "2026-10-13T03:53:16.024027Z",
+          "approvedById": "u_komed_ns",
+          "createdAt": null,
+          "expiryDate": "2026-09-23T00:00:00Z",
+          "hospitalId": "h_nusantara",
+          "id": "c_pns24_sip",
+          "issueDate": "2023-09-24T00:00:00Z",
+          "name": "SIP — Ns. Indah Permatasari, S.Kep",
+          "notes": null,
+          "number": "SIP-124/DPMPTSP/2025",
+          "practitionerId": "pns_24",
+          "practitionerName": "Ns. Indah Permatasari, S.Kep",
+          "profession": "Perawat",
+          "specialty": null,
+          "status": "Kedaluwarsa",
+          "type": "SIP"
+        }
+      ],
+      "total": 71
+    },
+    "ok": true
+  },
+  "GET /api/requirements": {
+    "data": {
+      "requirements": [
+        {
+          "approvalRequired": true,
+          "category": "Perizinan",
+          "code": "P1",
+          "docExpiry": "2027-01-02T00:00:00Z",
+          "docNumber": "NO-1",
+          "docType": null,
+          "evidenceRequired": true,
+          "fileName": "a.pdf",
+          "fileSize": null,
+          "fileType": null,
+          "hasFile": false,
+          "hospitalId": "h_nusantara",
+          "id": "req_ns_P1",
+          "issuedAt": "2025-01-02T00:00:00Z",
+          "name": "Izin Operasional Rumah Sakit",
+          "notes": "cek"
+        },
+        {
+          "approvalRequired": true,
+          "category": "Kerja Sama",
+          "code": "P2",
+          "docExpiry": "2027-01-02T00:00:00Z",
+          "docNumber": "NO-1",
+          "docType": null,
+          "evidenceRequired": true,
+          "fileName": "a.pdf",
+          "fileSize": null,
+          "fileType": null,
+          "hasFile": false,
+          "hospitalId": "h_nusantara",
+          "id": "req_ns_P2",
+          "issuedAt": "2025-01-02T00:00:00Z",
+          "name": "Perjanjian Kerja Sama (PKS) BPJS Kesehatan",
+          "notes": "cek"
+        }
+      ]
+    },
+    "ok": true
+  },
+  "GET /api/documents": {
+    "data": {
+      "documents": [
+        {
+          "credentialId": "c_pns01_str",
+          "fileName": "str.pdf",
+          "fileType": "application/pdf",
+          "hasFile": true,
+          "hospitalId": "h_nusantara",
+          "id": "doc_ebff2bfa7a1c0e24",
+          "notes": null,
+          "sizeKb": 1,
+          "status": "Menunggu Verifikasi",
+          "uploadedAt": "2026-10-13T03:53:17.434232Z",
+          "uploadedById": "u_admin_ns"
+        },
+        {
+          "credentialId": "c_pns24_sip",
+          "fileName": "str.pdf",
+          "fileType": "application/pdf",
+          "hasFile": true,
+          "hospitalId": "h_nusantara",
+          "id": "doc_b03280e334eeec56",
+          "notes": null,
+          "sizeKb": 1,
+          "status": "Menunggu Verifikasi",
+          "uploadedAt": "2026-10-13T03:53:17.426264Z",
+          "uploadedById": "u_admin_ns"
+        }
+      ]
+    },
+    "ok": true
+  },
+  "GET /api/claims": {
+    "data": {
+      "anomalies": [
+        {
+          "category": "Stock",
+          "claimId": "clm_ns_12",
+          "claimNumber": "CLM-2026-00112",
+          "description": "Pemakaian obat melebihi stok tercatat",
+          "detectedAt": null,
+          "evidenceJson": "{\"fhir\":[],\"source\":[]}",
+          "hospitalId": "h_nusantara",
+          "id": "can_ns_005",
+          "recommendation": "Verifikasi manual terhadap dokumen klaim.",
+          "reviewedBy": null,
+          "severity": "Sedang",
+          "status": "Baru",
+          "title": "Pemakaian obat melebihi stok tercatat"
+        },
+        {
+          "category": "Timeline",
+          "claimId": "clm_ns_15",
+          "claimNumber": "CLM-2026-00115",
+          "description": "Urutan waktu layanan tidak konsisten",
+          "detectedAt": null,
+          "evidenceJson": "{\"fhir\":[],\"source\":[]}",
+          "hospitalId": "h_nusantara",
+          "id": "can_ns_006",
+          "recommendation": "Verifikasi manual terhadap dokumen klaim.",
+          "reviewedBy": null,
+          "severity": "Sedang",
+          "status": "Baru",
+          "title": "Urutan waktu layanan tidak konsisten"
+        }
+      ],
+      "ccs": {
+        "flaggedClaims": 26,
+        "grade": "FAIR",
+        "score": 69.4,
+        "subs": [
+          {
+            "bad": 13,
+            "key": "Diagnosis",
+            "label": "Diagnosis Consistency",
+            "ok": 29,
+            "score": 69,
+            "warn": 0,
+            "weight": 0.25
+          },
+          {
+            "bad": 13,
+            "key": "Medication",
+            "label": "Medication Consistency",
+            "ok": 29,
+            "score": 69,
+            "warn": 0,
+            "weight": 0.2
+          }
+        ],
+        "totalClaims": 42
+      },
+      "claims": [
+        {
+          "admissionDate": null,
+          "billedAmount": 18250000,
+          "careType": "Rawat Jalan",
+          "claimNumber": "CLM-2026-00142",
+          "createdAt": null,
+          "dischargeDate": null,
+          "flagsJson": "{}",
+          "hospitalId": "h_nusantara",
+          "id": "clm_ns_42",
+          "inacbgCode": "A-4-10-I",
+          "inacbgDesc": "",
+          "patientInit": null,
+          "sepNumber": "SEP-2026142",
+          "status": "Diverifikasi"
+        },
+        {
+          "admissionDate": null,
+          "billedAmount": 17875000,
+          "careType": "Rawat Inap",
+          "claimNumber": "CLM-2026-00141",
+          "createdAt": null,
+          "dischargeDate": null,
+          "flagsJson": "{}",
+          "hospitalId": "h_nusantara",
+          "id": "clm_ns_41",
+          "inacbgCode": "J-1-20-I",
+          "inacbgDesc": "",
+          "patientInit": null,
+          "sepNumber": "SEP-2026141",
+          "status": "Diverifikasi"
+        }
+      ],
+      "total": 42
+    },
+    "ok": true
+  },
+  "GET /api/clinical": {
+    "data": {
+      "coverage": {
+        "covered": 16,
+        "total": 20
+      },
+      "cpcs": {
+        "adherence": 80.7,
+        "coverage": 80,
+        "documentation": 63.6,
+        "score": 76.3
+      },
+      "episodes": [
+        {
+          "adherence": 66,
+          "costRatio": null,
+          "deviationReason": null,
+          "deviationType": "Deviasi",
+          "documented": true,
+          "dpjp": null,
+          "episodeNumber": "EP-2026-001",
+          "hospitalId": "h_nusantara",
+          "id": "pe_ns_01",
+          "losActual": 3.5,
+          "losStandard": 4,
+          "pathwayId": "cp_ns_01",
+          "patientInit": null,
+          "period": null
+        },
+        {
+          "adherence": 67,
+          "costRatio": null,
+          "deviationReason": null,
+          "deviationType": "Deviasi",
+          "documented": true,
+          "dpjp": null,
+          "episodeNumber": "EP-2026-024",
+          "hospitalId": "h_nusantara",
+          "id": "pe_ns_24",
+          "losActual": 5.5,
+          "losStandard": 4,
+          "pathwayId": "cp_ns_08",
+          "patientInit": null,
+          "period": null
+        }
+      ],
+      "pathways": [
+        {
+          "avgAdherence": null,
+          "costRatio": null,
+          "deviationCount": 0,
+          "diagnosis": "Katarak",
+          "documentedDeviation": null,
+          "episodeCount": 0,
+          "hospitalId": "h_nusantara",
+          "icd10": "H25.9",
+          "id": "cp_ns_17",
+          "labAdherence": null,
+          "losAdherence": null,
+          "medicationAdherence": null,
+          "procedureAdherence": null,
+          "standardLos": 2,
+          "status": "Aktif",
+          "targetAdherence": 85
+        },
+        {
+          "avgAdherence": null,
+          "costRatio": null,
+          "deviationCount": 0,
+          "diagnosis": "Anemia",
+          "documentedDeviation": null,
+          "episodeCount": 0,
+          "hospitalId": "h_nusantara",
+          "icd10": "D64.9",
+          "id": "cp_ns_20",
+          "labAdherence": null,
+          "losAdherence": null,
+          "medicationAdherence": null,
+          "procedureAdherence": null,
+          "standardLos": 3,
+          "status": "Aktif",
+          "targetAdherence": 85
+        }
+      ]
+    },
+    "ok": true
+  },
+  "GET /api/compliance": {
+    "data": {
+      "mappings": [
+        {
+          "article": "Pasal 3",
+          "auditRequired": true,
+          "dataField": null,
+          "evidenceRef": null,
+          "feature": "Fitur terkait UU-17-2023",
+          "hospitalId": "h_nusantara",
+          "id": "cm_ns_01",
+          "lastReviewedAt": "2026-10-03T08:30:00Z",
+          "module": "Kredensial",
+          "owner": "Admin RS",
+          "regulation": {
+            "category": null,
+            "code": "UU-17-2023",
+            "number": "17/2023",
+            "title": "Undang-Undang Kesehatan"
+          },
+          "regulationId": "reg_01",
+          "requirement": "Fitur terkait UU-17-2023",
+          "reviewer": null,
+          "status": "Patuh",
+          "validation": null
+        },
+        {
+          "article": "Pasal 4",
+          "auditRequired": true,
+          "dataField": null,
+          "evidenceRef": null,
+          "feature": "Fitur terkait UU-17-2023",
+          "hospitalId": "h_nusantara",
+          "id": "cm_ns_02",
+          "lastReviewedAt": "2026-10-02T08:30:00Z",
+          "module": "Prasyarat Wajib",
+          "owner": "Admin RS",
+          "regulation": {
+            "category": null,
+            "code": "UU-17-2023",
+            "number": "17/2023",
+            "title": "Undang-Undang Kesehatan"
+          },
+          "regulationId": "reg_01",
+          "requirement": "Fitur terkait UU-17-2023",
+          "reviewer": null,
+          "status": "Patuh",
+          "validation": null
+        }
+      ],
+      "regulations": [
+        {
+          "authority": "Pemerintah RI",
+          "category": null,
+          "code": "PP-28-2024",
+          "effectiveAt": null,
+          "id": "reg_02",
+          "number": "28/2024",
+          "source": null,
+          "status": "Berlaku",
+          "summary": null,
+          "title": "Peraturan Pelaksanaan UU Kesehatan",
+          "versions": [
+            {
+              "changeSummary": null,
+              "id": "regv_02",
+              "impactLevel": "Sedang",
+              "issuedAt": "2024-06-01T00:00:00Z",
+              "regulationId": "reg_02",
+              "status": null,
+              "supersededBy": null,
+              "version": "v1"
+            }
+          ],
+          "year": 2024
+        },
+        {
+          "authority": "Kementerian Kesehatan",
+          "category": null,
+          "code": "PMK-3-2023",
+          "effectiveAt": null,
+          "id": "reg_10",
+          "number": "3/2023",
+          "source": null,
+          "status": "Berlaku",
+          "summary": null,
+          "title": "Standar Tarif Pelayanan Kesehatan dalam JKN",
+          "versions": [],
+          "year": 2023
+        }
+      ],
+      "summary": {
+        "belum": 0,
+        "ditinjau": 3,
+        "patuh": 7,
+        "sebagian": 12
+      },
+      "total": 22
+    },
+    "ok": true
+  },
+  "GET /api/evidence": {
+    "data": {
+      "byType": {
+        "Indikator": 6,
+        "Klaim": 3,
+        "Peringatan": 3,
+        "Regulasi": 4,
+        "Risiko": 6,
+        "Skor": 8
+      },
+      "items": [
+        {
+          "demoData": false,
+          "fhirResource": "AllergyIntolerance",
+          "hospitalId": "h_nusantara",
+          "id": "evd_ns_15",
+          "lastSyncAt": null,
+          "metric": "Kelengkapan Data Alergi",
+          "recordCount": 250,
+          "refId": "dig_ns_01",
+          "refType": "Indikator",
+          "sourceSystem": "SIMRS Utama",
+          "timestamp": null,
+          "title": "Kelengkapan Data Alergi",
+          "unit": null,
+          "validationStatus": "Valid",
+          "value": "93"
+        },
+        {
+          "demoData": false,
+          "fhirResource": "AllergyIntolerance",
+          "hospitalId": "h_nusantara",
+          "id": "evd_ns_16",
+          "lastSyncAt": null,
+          "metric": "Skrining Alergi Sebelum Peresepan",
+          "recordCount": 250,
+          "refId": "dig_ns_02",
+          "refType": "Indikator",
+          "sourceSystem": "SIMRS Utama",
+          "timestamp": null,
+          "title": "Skrining Alergi Sebelum Peresepan",
+          "unit": null,
+          "validationStatus": "Valid",
+          "value": "96"
+        }
+      ],
+      "total": 30
+    },
+    "ok": true
+  },
+  "GET /api/audit": {
+    "data": {
+      "logs": [
+        {
+          "action": "login",
+          "actorName": "dr. Aditya Nugraha, MARS",
+          "actorRole": "admin_rs",
+          "after": null,
+          "before": null,
+          "correlationId": "cor_81bfc9017bd8de32",
+          "createdAt": "2026-10-13T09:50:06.315383Z",
+          "description": "Login berhasil",
+          "entityId": "u_admin_ns",
+          "entityType": "users",
+          "hospitalId": "h_nusantara",
+          "id": "aud_03727c328b2fdd20",
+          "ip": "127.0.0.1"
+        },
+        {
+          "action": "login",
+          "actorName": "dr. Aditya Nugraha, MARS",
+          "actorRole": "admin_rs",
+          "after": null,
+          "before": null,
+          "correlationId": "cor_a05b27bd120832df",
+          "createdAt": "2026-10-13T08:44:15.878113Z",
+          "description": "Login berhasil",
+          "entityId": "u_admin_ns",
+          "entityType": "users",
+          "hospitalId": "h_nusantara",
+          "id": "aud_22f8a936601e5257",
+          "ip": "127.0.0.1"
+        }
+      ],
+      "total": 200
+    },
+    "ok": true
+  },
+  "GET /api/search": {
+    "data": {
+      "results": [
+        {
+          "icon": "Users",
+          "id": "pns_01",
+          "label": "dr. Budi Santoso, Sp.B",
+          "sub": "Dokter Spesialis — Bedah",
+          "type": "Praktisi",
+          "view": "cred-practitioners"
+        }
+      ],
+      "term": "budi"
+    },
+    "ok": true
+  },
+  "GET /api/reports": {
+    "data": {
+      "reports": [
+        {
+          "auditRef": "AUD-1A13364AA93",
+          "contentJson": "{\"tren\": [{\"ccs\": 78.9, \"bcds\": 82.4, \"cpcs\": 76.3, \"trust\": 92.3, \"health\": 80.9, \"period\": \"202...",
+          "generatedAt": "2026-10-13T03:53:17.715956Z",
+          "generatedBy": "dr. Aditya Nugraha, MARS",
+          "hospitalId": "h_nusantara",
+          "id": "rpt_eb1c4c051ad0fc92",
+          "methodology": "Scoring engine medcredix-scorer; sumber: SIMRS/EMR/BPJS/SATUSEHAT via integration layer; verifika...",
+          "period": "2026-07–2026-09",
+          "title": "Hospital Health Report",
+          "type": "kesehatan-rs",
+          "version": "v1.7"
+        },
+        {
+          "auditRef": "AUD-1A13364AA7F",
+          "contentJson": "{\"ccs\": {\"subs\": [{\"ok\": 29, \"bad\": 13, \"key\": \"Diagnosis\", \"warn\": 0, \"label\": \"Diagnosis Consis...",
+          "generatedAt": "2026-10-13T03:53:17.695465Z",
+          "generatedBy": "dr. Aditya Nugraha, MARS",
+          "hospitalId": "h_nusantara",
+          "id": "rpt_727c3a074dc9c24c",
+          "methodology": "Scoring engine medcredix-scorer; sumber: SIMRS/EMR/BPJS/SATUSEHAT via integration layer; verifika...",
+          "period": "2026-07–2026-09",
+          "title": "BPJS Claim Integrity Report",
+          "type": "klaim",
+          "version": "v1.6"
+        }
+      ],
+      "types": [
+        {
+          "desc": "Skor BDCS, kelompok A–D, prasyarat, kredensial & tenaga medis",
+          "title": "Laporan Kredensial RS",
+          "type": "kredensial"
+        },
+        {
+          "desc": "9 domain, tren 6 bulan, rekomendasi perbaikan",
+          "title": "Hospital Health Report",
+          "type": "kesehatan-rs"
+        }
+      ]
+    },
+    "ok": true
+  },
+  "GET /api/settings": {
+    "data": {
+      "hospital": {
+        "bedActive": 196,
+        "bedLicensed": 222,
+        "bedNotOperating": 26,
+        "bpjsFacilityCode": "0123",
+        "city": "Kota",
+        "class": "B",
+        "code": "RSNS",
+        "createdAt": "2026-10-13T03:49:21.120379Z",
+        "id": "h_nusantara",
+        "name": "RS Uji",
+        "notOperatingNote": null,
+        "onboarding": false,
+        "onboardingStatus": null,
+        "province": "Prov",
+        "satusehatOrgId": "org1",
+        "tier": null
+      },
+      "permissions": [
+        "VIEW",
+        "CREATE"
+      ],
+      "roles": [
+        {
+          "key": "super_admin",
+          "label": "SPKD Super Admin",
+          "permissions": [
+            "VIEW",
+            "CREATE"
+          ]
+        },
+        {
+          "key": "admin_rs",
+          "label": "Admin RS",
+          "permissions": [
+            "VIEW",
+            "CREATE"
+          ]
+        }
+      ],
+      "rules": [
+        {
+          "active": false,
+          "channels": "in-app",
+          "condition": "< 80",
+          "domain": "Clinical Pathway",
+          "hospitalId": "h_nusantara",
+          "id": "ar_ns_04",
+          "lastTriggeredAt": null,
+          "metric": "avg_adherence",
+          "name": "Adherence pathway rendah",
+          "severity": "Sedang",
+          "triggeredCount": 0
+        },
+        {
+          "active": false,
+          "channels": "in-app,email",
+          "condition": "<= 30",
+          "domain": "Kredensial",
+          "hospitalId": "h_nusantara",
+          "id": "ar_ns_01",
+          "lastTriggeredAt": null,
+          "metric": "expiry_days",
+          "name": "Kredensial <= 30 hari",
+          "severity": "Tinggi",
+          "triggeredCount": 0
+        }
+      ],
+      "users": [
+        {
+          "active": true,
+          "email": "it@nusantarasehat.co.id",
+          "id": "u_it_ns",
+          "lastLogin": "2026-10-13T03:53:14.486158Z",
+          "name": "Andika Pratama, S.Kom",
+          "role": "it_simrs",
+          "roleLabel": "IT / SIMRS",
+          "title": null
+        },
+        {
+          "active": true,
+          "email": "viewer@nusantarasehat.co.id",
+          "id": "u_view_ns",
+          "lastLogin": "2026-10-13T03:53:14.803004Z",
+          "name": "Dewi Anggraini, S.E",
+          "role": "viewer",
+          "roleLabel": "Viewer",
+          "title": null
+        }
+      ]
+    },
+    "ok": true
+  },
+  "GET /api/data": {
+    "data": {
+      "issues": [
+        {
+          "affectedRecords": null,
+          "anomaly": true,
+          "description": "Gap Encounter antar sistem",
+          "detectedAt": null,
+          "dimension": "Konsistensi",
+          "hospitalId": "h_nusantara",
+          "id": "dq_ns_06",
+          "resolvedAt": null,
+          "severity": "Tinggi",
+          "sourceSystem": null,
+          "status": "Diperbaiki",
+          "title": "Gap Encounter antar sistem"
+        },
+        {
+          "affectedRecords": null,
+          "anomaly": false,
+          "description": "Format NIK tidak valid pada 12 rekaman",
+          "detectedAt": null,
+          "dimension": "Validitas",
+          "hospitalId": "h_nusantara",
+          "id": "dq_ns_07",
+          "resolvedAt": null,
+          "severity": "Sedang",
+          "sourceSystem": null,
+          "status": "Diperbaiki",
+          "title": "Format NIK tidak valid pada 12 rekaman"
+        }
+      ],
+      "summary": {
+        "anomaly": 2,
+        "terbuka": 5,
+        "total": 10
+      }
+    },
+    "ok": true
+  },
+  "ERR401": {
+    "error": "Sesi tidak valid atau kosong. Silakan masuk kembali.",
+    "ok": false
+  },
+  "POST /api/actions": {
+    "data": {
+      "code": "ACT-018",
+      "createdAt": "2026-10-13T09:50:28.50623Z",
+      "description": "SIP berakhir 30 hari lagi",
+      "dueDate": "2026-11-30T00:00:00Z",
+      "expectedOutcome": "SIP aktif kembali",
+      "hospitalId": "h_nusantara",
+      "id": "act_1802fd9a773df101",
+      "owner": "Sari",
+      "ownerRole": "",
+      "priority": "Tinggi",
+      "progressNote": null,
+      "resolutionNote": null,
+      "resolvedAt": null,
+      "sourceRef": "cred_001",
+      "sourceType": "Kredensial",
+      "status": "Ditugaskan"
+    },
+    "ok": true
+  },
+  "PATCH /api/actions": {
+    "data": {
+      "actionId": "act_1802fd9a773df101",
+      "byName": "dr. Aditya Nugraha, MARS",
+      "createdAt": "2026-10-13T09:50:28.511758Z",
+      "fromValue": null,
+      "id": "ae_9411b4a4a72cdfda",
+      "note": "Sudah dihubungi bagian SDM",
+      "toValue": null,
+      "type": "comment"
+    },
+    "ok": true
+  },
+  "PATCH /api/risks": {
+    "data": {
+      "affectedRecords": "[]",
+      "businessImpact": "Dapat menurunkan skor BDCS dan menghambat kelulusan kredensial BPJS",
+      "category": "Kredensial",
+      "code": "RSK-001",
+      "deadline": "2026-12-01T00:00:00Z",
+      "description": "13 kredensial mendekati kedaluwarsa (data demo)",
+      "detectedAt": null,
+      "domain": "Credentialing Readiness",
+      "evidenceJson": "[]",
+      "hospitalId": "h_nusantara",
+      "id": "rsk_ns_001",
+      "level": "Tinggi",
+      "recommendedAction": "Proses perpanjangan STR/SIP sebelum jatuh tempo",
+      "status": "Ditinjau",
+      "suggestedOwner": "Tim Mutu",
+      "title": "13 kredensial mendekati kedaluwarsa"
+    },
+    "ok": true
+  },
+  "PATCH /api/warnings": {
+    "data": {
+      "acknowledgedAt": null,
+      "acknowledgedBy": "dr. Aditya Nugraha, MARS",
+      "assignedTo": null,
+      "code": "EW-005",
+      "description": "Kepatuhan pathway di bawah ambang",
+      "detectedAt": null,
+      "domain": null,
+      "dueDate": null,
+      "hospitalId": "h_nusantara",
+      "id": "ew_ns_005",
+      "severity": "Sedang",
+      "status": "Diketahui",
+      "thresholdRule": "adherence < 80%",
+      "title": "Kepatuhan pathway di bawah ambang",
+      "triggerValue": "76,3%"
+    },
+    "ok": true
+  },
+  "POST /api/reports": {
+    "data": {
+      "auditRef": "AUD-1A134ABACB0",
+      "contentJson": "{\"ringkasan\":{\"bcds\":75.2,\"ccs\":69.4,\"cpcs\":76.3,\"healthScore\":74.4,\"kelas\":\"B\",\"kota\":\"Kota\",\"na...",
+      "generatedAt": "2026-10-13T09:50:28.528958Z",
+      "generatedBy": "dr. Aditya Nugraha, MARS",
+      "hospitalId": "h_nusantara",
+      "id": "rpt_3f9a91d5fcb4cc04",
+      "methodology": "Scoring engine medcredix-scorer/1.0; sumber: SIMRS/EMR/BPJS/SATUSEHAT via integration layer; veri...",
+      "period": "2026-07–2026-09",
+      "title": "Risk Report",
+      "type": "risiko",
+      "version": "v1.8"
+    },
+    "ok": true
+  },
+  "POST /api/data": {
+    "data": {
+      "baseUrl": "simulasi (SIMRS_FHIR_BASE_URL belum diisi)",
+      "results": [
+        {
+          "resource": "Patient",
+          "status": "Perlu Perbaikan",
+          "count": 0,
+          "message": "simulasi dari data_sources"
+        },
+        {
+          "resource": "Encounter",
+          "status": "Perlu Perbaikan",
+          "count": 0,
+          "message": "simulasi dari data_sources"
+        }
+      ],
+      "simulated": true,
+      "source": "SIMRS Billing",
+      "summary": {
+        "gagal": 0,
+        "ok": 0,
+        "perlu": 24
+      },
+      "testedAt": "2026-10-13T09:50:28.535741474Z"
+    },
+    "ok": true
+  },
+  "POST /api/scores/snapshot": {
+    "data": {
+      "id": "ss_1957daaeb8688ad6",
+      "hospital_id": "h_nusantara",
+      "period": "2026-10",
+      "health_score": 74.4,
+      "bdcs": 75.2,
+      "trust": 92.3,
+      "ccs": 69.4,
+      "cpcs": 76.3,
+      "ur_score": 98,
+      "safety_score": 62.7,
+      "formula_version": "medcredix-scorer/1.0",
+      "created_at": "2026-10-13T09:50:28.541128Z"
+    },
+    "ok": true
+  },
+  "POST /api/auth/logout": {
+    "data": {
+      "loggedOut": true
+    },
+    "ok": true
+  },
+  "ERR_LOGIN": {
+    "error": "Email atau kata sandi salah.",
+    "ok": false
+  }
+}
