@@ -4,6 +4,7 @@
 import { X } from 'lucide-vue-next'
 import { onBeforeUnmount, watch } from 'vue'
 import { lockScroll, unlockScroll } from '~/composables/useScrollLock'
+import { openOverlay } from '~/composables/useOverlayStack'
 const props = defineProps<{ open: boolean; side?: 'right' | 'left' }>()
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 const side = props.side ?? 'right'
@@ -12,12 +13,16 @@ function onKey(e: KeyboardEvent) {
   if (e.key === 'Escape') emit('update:open', false)
 }
 let locked = false
+let release: (() => void) | null = null
 function sync(v: boolean) {
   if (typeof document === 'undefined') return
   document.removeEventListener('keydown', onKey)
   if (v) document.addEventListener('keydown', onKey)
   if (v && !locked) { lockScroll(); locked = true }
   if (!v && locked) { unlockScroll(); locked = false }
+  // Pop-up baru menutup pop-up lama yang masih terbuka.
+  if (v && !release) release = openOverlay(() => emit('update:open', false))
+  if (!v && release) { release(); release = null }
 }
 watch(() => props.open, sync, { immediate: true })
 onBeforeUnmount(() => sync(false))
@@ -32,8 +37,10 @@ onBeforeUnmount(() => sync(false))
           role="dialog"
           aria-modal="true"
           :class="[
-            'absolute top-0 z-10 flex h-full w-full flex-col bg-card shadow-xl outline-none',
-            side === 'right' ? 'right-0 sm:max-w-2xl' : 'left-0 w-64 border-r border-sidebar-border bg-sidebar',
+            'absolute top-0 z-10 flex h-full flex-col shadow-xl outline-none',
+            side === 'right'
+              ? 'right-0 w-full bg-card sm:max-w-2xl'
+              : 'left-0 w-64 max-w-[85vw] border-r border-sidebar-border bg-sidebar',
           ]"
         >
           <button
