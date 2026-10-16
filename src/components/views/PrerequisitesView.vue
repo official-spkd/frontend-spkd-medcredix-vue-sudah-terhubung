@@ -99,7 +99,7 @@ const canVerify = computed(() => store.user?.permissions.includes('VERIFY'))
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-1.5">
-              <Badge class="bg-brand text-[10px] font-bold hover:bg-brand">{{ r.code }}</Badge>
+              <Badge class="text-[10px] font-bold">{{ r.code }}</Badge>
               <Badge v-if="r.required" variant="outline" class="text-[9px] font-bold text-danger">WAJIB</Badge>
               <Badge v-else variant="outline" class="text-[9px]">Opsional</Badge>
               <StatusBadge :status="r.status" />
