@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Toaster — wadah notifikasi toast (pojok kanan bawah).
+// Toaster — wadah notifikasi toast (pojok kanan bawah; di HP selebar layar dengan jarak tepi).
 import { CheckCircle2, XCircle, X } from 'lucide-vue-next'
 import { useToastStore } from '~/composables/useToast'
 const store = useToastStore()
@@ -7,7 +7,7 @@ const store = useToastStore()
 
 <template>
   <Teleport to="body">
-    <div class="fixed bottom-4 right-4 z-[100] flex w-full max-w-sm flex-col gap-2">
+    <div class="fixed inset-x-4 bottom-4 z-[100] flex flex-col gap-2 sm:inset-x-auto sm:right-4 sm:w-full sm:max-w-sm">
       <TransitionGroup name="toast">
         <div
           v-for="t in store.items"
