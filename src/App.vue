@@ -3,7 +3,7 @@
 // "From Hospital Data to Action."
 // Port dari src/app/page.tsx: boot sesi + hash-router + 29 view + drawer global.
 import { useMedCredix, useHashRouter, type SessionUser } from '~/stores/medcredix'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import type { Component } from 'vue'
 import { api } from '~/composables/useApi'
 import { NAV } from '~/utils/nav'
@@ -42,10 +42,16 @@ import SettingsUsersView from '~/components/views/SettingsUsersView.vue'
 import UtilizationView from '~/components/views/UtilizationView.vue'
 import VerificationView from '~/components/views/VerificationView.vue'
 import WorkforceView from '~/components/views/WorkforceView.vue'
+import ErrorPage from '~/components/medcredix/ErrorPage.vue'
+// Dokumentasi API dimuat terpisah agar tidak memperberat aplikasi utama
+// Dokumentasi API sekarang di Swagger (public/api_v1_documentation_medcredix)
+const API_DOCS_URL = '/api_v1_documentation_medcredix/'
 
 const store = useMedCredix()
 useHashRouter()
 const booted = ref(false)
+// Gagal memuat data awal karena server: 503 (tidak terhubung) atau 500 (galat server)
+const bootError = ref<500 | 503 | null>(null)
 
 const VIEWS: Record<string, Component> = {
   dashboard: DashboardView,
@@ -97,13 +103,24 @@ onMounted(async () => {
       if (boot?.needsHospital && boot.hospitals?.length) store.setHospital(boot.hospitals[0].id)
     } catch (e: any) {
       // hanya sesi yang benar-benar tidak dikenal yang dikeluarkan; error lain dibiarkan
-      if (/Sesi|token|Token/.test(String(e?.message ?? ''))) store.logout()
+      const msg = String(e?.message ?? '')
+      if (/Sesi|token|Token/.test(msg)) store.logout()
+      // 502/503/504 = gateway tidak bisa menjangkau backend, sama artinya dengan tidak terhubung
+      else if (/Tidak dapat terhubung|\((502|503|504)\)/.test(msg)) bootError.value = 503
+      else if (/\(5\d\d\)/.test(msg)) bootError.value = 500
     }
   }
   booted.value = true
 })
 
 const activeView = computed(() => VIEWS[store.view])
+// 404: alamat di luar "/" atau nama halaman (#/...) yang tidak dikenal
+const notFound = computed(() => !!store.notFoundPath || !activeView.value)
+const notFoundLabel = computed(() => store.notFoundPath ?? `#/${store.view}`)
+// #/api-docs bisa dibuka tanpa login
+const isApiDocs = computed(() => store.view === 'api-docs' || store.view.startsWith('api-docs/'))
+// alamat lama #/api-docs dialihkan ke Swagger
+watch(isApiDocs, (v) => { if (v) window.location.replace(API_DOCS_URL) }, { immediate: true })
 
 // Halaman yang dibatasi peran (sama dengan menu samping) tidak dirender untuk peran lain,
 // walau alamatnya diketik langsung di browser.
@@ -115,35 +132,31 @@ const allowed = computed(() => {
 
 <template>
   <div>
+    <!-- Dokumentasi API lama: sedang dialihkan ke Swagger -->
+    <div v-if="isApiDocs" class="min-h-screen bg-background" />
+
     <!-- Memuat -->
-    <div v-if="!booted" class="flex min-h-screen items-center justify-center bg-background">
+    <div v-else-if="!booted" class="flex min-h-screen items-center justify-center bg-background">
       <div class="flex flex-col items-center gap-3">
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-brand">
-          <svg viewBox="0 0 32 32" class="h-7 w-7 animate-pulse"><path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" fill="#fff" /></svg>
-        </div>
+        <img src="/logo/icon.svg" alt="Logo MedCredix" class="h-14 w-14 animate-pulse" />
         <div class="text-xs font-medium text-muted-foreground">Memuat MedCredix…</div>
       </div>
     </div>
 
+    <!-- Halaman kesalahan: satu halaman penuh, tanpa sidebar, navbar, dan footer (sudah login maupun belum) -->
+    <ErrorPage v-else-if="notFound" :code="404" :path="notFoundLabel" />
+
     <!-- Login -->
     <LoginScreen v-else-if="!store.user" />
+
+    <ErrorPage v-else-if="bootError" :code="bootError" />
+    <ErrorPage v-else-if="!allowed" :code="403" />
 
     <!-- Aplikasi -->
     <template v-else>
       <AppShell>
-        <div v-if="activeView && !allowed" class="flex flex-col items-center justify-center gap-3 py-24 text-center">
-          <div class="font-display text-lg font-bold">Tidak punya akses</div>
-          <p class="max-w-sm text-sm text-muted-foreground">
-            Halaman ini tidak tersedia untuk peran {{ store.user?.roleLabel ?? store.user?.role }}. Gunakan menu di sisi kiri.
-          </p>
-        </div>
-        <component :is="activeView" v-else-if="activeView" />
-        <div v-else class="flex flex-col items-center justify-center gap-3 py-24 text-center">
-          <div class="font-display text-lg font-bold">Halaman tidak ditemukan</div>
-          <p class="max-w-sm text-sm text-muted-foreground">
-            Tampilan "{{ store.view }}" tidak tersedia. Gunakan menu di sisi kiri atau tekan Ctrl+K untuk mencari.
-          </p>
-        </div>
+        <!-- key = RS aktif: saat ganti RS, halaman dibuat ulang sehingga datanya langsung dimuat ulang tanpa refresh manual -->
+        <component :is="activeView" :key="store.hospitalId ?? 'rs'" />
         <WhyDrawer />
         <ActionDialog />
         <EvidenceDrawer />
