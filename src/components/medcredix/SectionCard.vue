@@ -1,11 +1,12 @@
 <script setup lang="ts">
 // SectionCard — kartu bagian dengan judul, sub, ikon & slot action.
+// Di HP slot action turun ke bawah judul dan memakai lebar penuh.
 defineProps<{ title: any; sub?: any }>()
 </script>
 
 <template>
   <div class="rounded-xl border border-border/80 bg-card">
-    <div class="flex flex-row items-start justify-between space-y-0 p-5 pb-3">
+    <div class="flex flex-col gap-3 p-4 pb-3 sm:flex-row sm:items-start sm:justify-between sm:p-5 sm:pb-3">
       <div class="flex items-start gap-2.5">
         <span v-if="$slots.icon" class="mt-0.5 rounded-lg bg-brand-light p-1.5 text-brand"><slot name="icon" /></span>
         <div>
@@ -13,8 +14,8 @@ defineProps<{ title: any; sub?: any }>()
           <p v-if="sub" class="mt-0.5 text-xs text-muted-foreground">{{ sub }}</p>
         </div>
       </div>
-      <div v-if="$slots.action"><slot name="action" /></div>
+      <div v-if="$slots.action" class="w-full sm:w-auto"><slot name="action" /></div>
     </div>
-    <div class="px-5 pb-5"><slot /></div>
+    <div class="px-4 pb-4 sm:px-5 sm:pb-5"><slot /></div>
   </div>
 </template>
