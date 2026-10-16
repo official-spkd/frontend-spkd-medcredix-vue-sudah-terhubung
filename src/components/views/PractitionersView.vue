@@ -60,6 +60,28 @@ watch(list, (rows: any[]) => {
   if (seen.size !== professions.value.length) professions.value = [...seen].sort()
 })
 watch(() => store.hospitalId, () => { professions.value = []; prof.value = 'all' })
+// Nilai dianggap kosong bila null, string kosong, atau "—" (placeholder dari backend).
+function has(v: unknown): boolean {
+  return v != null && String(v).trim() !== '' && String(v).trim() !== '—'
+}
+// Baris "PROFESI · UNIT" di kepala dialog, hanya bagian yang ada isinya.
+const headerLine = computed(() => {
+  const p = detail.value?.practitioner
+  return p ? [p.profession, p.department].filter(has).join(' · ') : ''
+})
+// "Nomor · Terbit … · Berakhir …" tanpa bagian yang kosong.
+function credMeta(c: any): string {
+  return [
+    has(c.number) ? c.number : '',
+    c.issueDate ? `Terbit ${fmtDate(c.issueDate)}` : '',
+    c.expiryDate ? `Berakhir ${fmtDate(c.expiryDate)}` : '',
+  ].filter(Boolean).join(' · ')
+}
+// Dokumen terbaru (yang sudah ada berkasnya) untuk satu kredensial — dibuka lewat ikon mata di kartu.
+function latestDoc(credId: string) {
+  const docs = (detail.value?.documents ?? []).filter((d: any) => d.credentialId === credId && d.hasFile)
+  return docs.sort((a: any, b: any) => String(b.uploadedAt ?? '').localeCompare(String(a.uploadedAt ?? '')))[0] ?? null
+}
 function toneCls(tone: string) {
   return tone === 'danger' ? 'bg-danger-light text-danger' : tone === 'warning' ? 'bg-warning-light text-warning' : tone === 'success' ? 'bg-success-light text-success' : 'bg-muted text-muted-foreground'
 }
@@ -77,27 +99,57 @@ async function viewDoc(d: any) {
       title="Praktisi"
       sub="Master tenaga medis — status STR & SIP terlihat langsung (perbaikan dari temuan QA produk lama)." demo
     />
-    <div class="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3">
-      <div class="relative">
-        <Search class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-        <Input v-model="q" placeholder="Cari nama, spesialisasi, nomor STR/SIP…" class="h-8 w-64 pl-8 text-xs" />
+    <div class="grid grid-cols-2 gap-2 rounded-xl border bg-card p-3 sm:flex sm:flex-wrap sm:items-center">
+      <div class="relative col-span-2 sm:w-72">
+        <Search class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Input v-model="q" placeholder="Cari nama, spesialisasi, nomor STR/SIP…" class="h-9 w-full pl-8 text-xs" />
       </div>
-      <div class="w-48">
+      <div class="w-full sm:w-48">
         <Select v-model="prof">
           <SelectOption value="all">Semua Profesi</SelectOption>
           <SelectOption v-for="p in professions" :key="p" :value="p">{{ p }}</SelectOption>
         </Select>
       </div>
-      <div class="w-36">
+      <div class="w-full sm:w-40">
         <Select v-model="status">
           <SelectOption value="all">Semua Status</SelectOption>
           <SelectOption v-for="s in ['Aktif', 'Ditangguhkan', 'Nonaktif']" :key="s" :value="s">{{ s }}</SelectOption>
         </Select>
       </div>
-      <span class="ml-auto text-xs text-muted-foreground">{{ data?.total ?? 0 }} praktisi</span>
+      <span class="col-span-2 text-right text-xs text-muted-foreground sm:ml-auto">{{ data?.total ?? 0 }} praktisi</span>
     </div>
 
-    <div class="overflow-x-auto rounded-xl border bg-card">
+    <!-- HP: daftar kartu -->
+    <div class="space-y-2 sm:hidden">
+      <button
+        v-for="p in list" :key="p.id" type="button"
+        class="w-full rounded-xl border bg-card p-3.5 text-left transition-colors active:bg-muted/40" @click="selected = p.id"
+      >
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            <div class="text-sm font-semibold leading-snug">{{ p.fullName }}</div>
+            <div class="mt-0.5 text-[11px] text-muted-foreground">
+              {{ p.profession }}{{ p.specialty ? ` — ${p.specialty}` : '' }} · {{ p.department }}
+            </div>
+          </div>
+          <StatusBadge :status="p.status" />
+        </div>
+        <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-[10px]">
+          <span class="font-semibold text-muted-foreground">STR</span>
+          <span :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold', toneCls(expiryLabel(p.strExpiry).tone)]">
+            <Clock class="h-3 w-3" /> {{ expiryLabel(p.strExpiry).text }}
+          </span>
+          <span class="ml-1 font-semibold text-muted-foreground">SIP</span>
+          <StatusBadge v-if="daysFromNow(p.sipExpiry) != null && daysFromNow(p.sipExpiry)! < 0" status="Kedaluwarsa" />
+          <span v-else :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold', toneCls(expiryLabel(p.sipExpiry).tone)]">
+            <Clock class="h-3 w-3" /> {{ expiryLabel(p.sipExpiry).text }}
+          </span>
+        </div>
+      </button>
+      <div v-if="!list.length" class="rounded-xl border bg-card p-6 text-center text-xs text-muted-foreground">Tidak ada praktisi yang cocok.</div>
+    </div>
+
+    <div class="hidden overflow-x-auto rounded-xl border bg-card sm:block">
       <table class="w-full text-xs">
         <thead class="bg-muted/60 text-left text-[10px] uppercase tracking-wide text-muted-foreground">
           <tr>
@@ -138,64 +190,79 @@ async function viewDoc(d: any) {
     <Dialog size="lg" :open="!!selected" @update:open="(o) => !o && (selected = null)">
       <template v-if="detail">
         <div class="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
-          {{ detail.practitioner.profession }} · {{ detail.practitioner.department }} <DemoBadge />
+          <span v-if="headerLine">{{ headerLine }}</span> <DemoBadge />
         </div>
         <h2 class="mt-1 text-left text-lg font-bold">{{ detail.practitioner.fullName }}</h2>
         <div class="mt-4 space-y-4">
+          <!-- Tampilan sama seperti semula; kotak yang tidak ada isinya disembunyikan (tanpa "—"), kecuali NIK yang selalu tampil. -->
           <div class="grid gap-2 text-xs sm:grid-cols-2">
-            <div class="rounded-lg bg-muted/40 p-3">
-              <span class="text-muted-foreground">Spesialisasi:</span> <strong>{{ detail.practitioner.specialty ?? '—' }}</strong>
-              <template v-if="detail.practitioner.subSpecialty"> · Sub: {{ detail.practitioner.subSpecialty }}</template>
+            <div v-if="has(detail.practitioner.specialty)" class="rounded-lg bg-muted/40 p-3">
+              <span class="text-muted-foreground">Spesialisasi:</span> <strong>{{ detail.practitioner.specialty }}</strong>
+              <template v-if="has(detail.practitioner.subSpecialty)"> · Sub: {{ detail.practitioner.subSpecialty }}</template>
             </div>
             <div class="rounded-lg bg-muted/40 p-3">
-              <span class="text-muted-foreground">NIK (disamarkan):</span> <strong>{{ detail.practitioner.nikMasked }}</strong>
+              <span class="text-muted-foreground">NIK (disamarkan):</span>{{ ' ' }}
+              <strong v-if="has(detail.practitioner.nikMasked)">{{ detail.practitioner.nikMasked }}</strong>
+              <strong v-else class="font-bold text-red-600 dark:text-red-400">Belum diisi</strong>
               <Hint>Perlindungan Data Pribadi (UU 27/2022) — NIK penuh tidak pernah disimpan di platform analitik.</Hint>
             </div>
-            <div class="rounded-lg bg-muted/40 p-3">
-              <span class="text-muted-foreground">STR:</span> <strong>{{ detail.practitioner.strNumber }}</strong> · berlaku s.d. {{ fmtDate(detail.practitioner.strExpiry) }}
+            <div v-if="has(detail.practitioner.strNumber)" class="rounded-lg bg-muted/40 p-3">
+              <span class="text-muted-foreground">STR:</span> <strong>{{ detail.practitioner.strNumber }}</strong>
+              <template v-if="detail.practitioner.strExpiry"> · berlaku s.d. {{ fmtDate(detail.practitioner.strExpiry) }}</template>
             </div>
-            <div class="rounded-lg bg-muted/40 p-3">
-              <span class="text-muted-foreground">SIP:</span> <strong>{{ detail.practitioner.sipNumber }}</strong> ·
-              <span :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold', toneCls(expiryLabel(detail.practitioner.sipExpiry).tone)]">
-                <Clock class="h-3 w-3" /> {{ expiryLabel(detail.practitioner.sipExpiry).text }}
-              </span>
+            <div v-if="has(detail.practitioner.sipNumber)" class="rounded-lg bg-muted/40 p-3">
+              <span class="text-muted-foreground">SIP:</span> <strong>{{ detail.practitioner.sipNumber }}</strong>
+              <template v-if="detail.practitioner.sipExpiry"> ·
+                <span :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold', toneCls(expiryLabel(detail.practitioner.sipExpiry).tone)]">
+                  <Clock class="h-3 w-3" /> {{ expiryLabel(detail.practitioner.sipExpiry).text }}
+                </span>
+              </template>
             </div>
-            <div class="rounded-lg bg-muted/40 p-3"><span class="text-muted-foreground">Status kepegawaian:</span> <strong>{{ detail.practitioner.employmentType }}</strong></div>
+            <div v-if="has(detail.practitioner.employmentType)" class="rounded-lg bg-muted/40 p-3">
+              <span class="text-muted-foreground">Status kepegawaian:</span> <strong>{{ detail.practitioner.employmentType }}</strong>
+            </div>
             <div class="rounded-lg bg-muted/40 p-3">
               <span class="text-muted-foreground">Standar kebutuhan:</span> <strong>{{ detail.standard?.required ?? 1 }} SDM</strong>
-              {{ detail.standard?.note ? `· ${detail.standard.note}` : '' }}
+              <template v-if="has(detail.standard?.note)"> · {{ detail.standard.note }}</template>
             </div>
           </div>
 
-          <SectionCard title="Kredensial & Dokumen" :sub="`${detail.credentials.length} kredensial tercatat — versi & jejak audit tersimpan`">
-            <div class="space-y-2">
+          <SectionCard title="Kredensial & Dokumen" :sub="detail.credentials.length ? `${detail.credentials.length} kredensial tercatat — versi & jejak audit tersimpan` : undefined">
+            <div v-if="!detail.credentials.length" class="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">
+              Belum ada kredensial tercatat untuk praktisi ini.
+            </div>
+            <div v-else class="space-y-2">
               <div v-for="c in detail.credentials" :key="c.id" class="rounded-xl border p-3">
-                <div class="flex flex-wrap items-start justify-between gap-2">
+                <div class="flex items-start justify-between gap-2">
                   <div class="min-w-0">
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline" class="text-[9px] font-bold">{{ c.type }}</Badge>
                       <StatusBadge :status="c.status" />
-                      <span class="text-[9px] text-muted-foreground">v{{ c.version }}</span>
+                      <span v-if="c.version" class="text-[9px] text-muted-foreground">v{{ c.version }}</span>
                     </div>
                     <div class="mt-1 truncate text-xs font-medium">{{ c.name }}</div>
-                    <div class="mt-0.5 text-[10px] text-muted-foreground">{{ c.number }} · Terbit {{ fmtDate(c.issueDate) }} · Berakhir {{ fmtDate(c.expiryDate) }}</div>
+                    <div v-if="credMeta(c)" class="mt-0.5 text-[10px] text-muted-foreground">{{ credMeta(c) }}</div>
                   </div>
-                  <span :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold', toneCls(expiryLabel(c.expiryDate).tone)]">
-                    <Clock class="h-3 w-3" /> {{ expiryLabel(c.expiryDate).text }}
-                  </span>
+                  <div class="flex shrink-0 items-center gap-1.5">
+                    <span v-if="c.expiryDate" :class="['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold', toneCls(expiryLabel(c.expiryDate).tone)]">
+                      <Clock class="h-3 w-3" /> {{ expiryLabel(c.expiryDate).text }}
+                    </span>
+                    <!-- Satu ikon mata per kredensial: aktif bila sudah ada berkas, abu-abu bila belum. -->
+                    <Button
+                      size="sm" variant="outline" class="h-7 w-7 p-0 text-brand-2" :aria-label="`Lihat dokumen ${c.type}`"
+                      :disabled="!latestDoc(c.id)"
+                      :title="latestDoc(c.id) ? `Lihat dokumen: ${latestDoc(c.id).fileName}` : 'Belum ada berkas — unggah lewat menu Dokumen'"
+                      @click="latestDoc(c.id) && viewDoc(latestDoc(c.id))"
+                    >
+                      <Eye class="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
                 <div v-for="d in detail.documents.filter((x: any) => x.credentialId === c.id)" :key="d.id" class="mt-2 flex items-center gap-2 rounded-lg bg-muted/50 px-2.5 py-1.5 text-[10px]">
-                  <FileText class="h-3.5 w-3.5 text-brand-2" />
+                  <FileText class="h-3.5 w-3.5 shrink-0 text-brand-2" />
                   <span class="truncate font-medium">{{ d.fileName }}</span>
-                  <span class="text-muted-foreground">{{ d.sizeKb }} KB</span>
+                  <span v-if="d.sizeKb" class="shrink-0 text-muted-foreground">{{ d.sizeKb }} KB</span>
                   <StatusBadge :status="d.status" class="ml-auto" />
-                  <Button
-                    size="sm" variant="ghost" class="h-5 w-5 p-0" aria-label="Lihat dokumen"
-                    :disabled="!d.hasFile" :title="d.hasFile ? 'Buka berkas' : 'Berkas belum diunggah'"
-                    @click="viewDoc(d)"
-                  >
-                    <Eye class="h-3 w-3" />
-                  </Button>
                 </div>
               </div>
             </div>
